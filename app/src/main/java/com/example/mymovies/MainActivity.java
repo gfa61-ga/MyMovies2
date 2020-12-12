@@ -5,6 +5,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -25,20 +26,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        String apiResponse = getResources().getString(R.string.movies_json);
-        movies = JsonUtils.parseMovies(apiResponse);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerview_movies);
 
         int mNoOfColumns = Utility.calculateNoOfColumns(getApplicationContext(), 185);
         GridLayoutManager mGridLayoutManager = new GridLayoutManager(this, mNoOfColumns);
-
         mGridLayoutManager.setReverseLayout(false);
         mGridLayoutManager.canScrollVertically();
-
         mRecyclerView.setLayoutManager(mGridLayoutManager);
 
         mRecyclerView.setHasFixedSize(true);
+        loadMovies(R.string.most_popular_movies_json);
         mMovieAdapter = new MovieAdapter(movies);
         mRecyclerView.setAdapter(mMovieAdapter);
     }
@@ -59,12 +57,25 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_order_most_popular) {
+            loadMovies(R.string.most_popular_movies_json);
             return true;
         }
         if (id == R.id.action_order_top_rated) {
+            loadMovies(R.string.tor_rated_movies_json);
             return true;
         }
-
         return super.onOptionsItemSelected(item);
+    }
+
+    private void loadMovies(int stringId) {
+        // we temporary saved APIresponses to res/layout/strings.xml strings
+        // to save an APIresponse to a string we must
+        //    1. replace all  "  in the json object with  \"
+        //    2. enclose the APIresponce json object between ""
+        String apiResponse = getResources().getString(stringId);
+        movies = JsonUtils.parseMovies(apiResponse);
+        if (mMovieAdapter != null) {
+            mMovieAdapter.notifyAdapterDataSetChanged(movies);
+        }
     }
 }

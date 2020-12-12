@@ -50,4 +50,8 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
             moviePosterImageView = (ImageView) itemView.findViewById(R.id.movie_item_poster);
         }
     }
+    public void notifyAdapterDataSetChanged(List<Movie> movies) {
+        this.movies = movies;
+        notifyDataSetChanged();
+    }
 }
