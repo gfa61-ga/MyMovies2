@@ -1,6 +1,7 @@
 package com.example.mymovies;
 
 import com.example.mymovies.model.Movie;
+import com.example.mymovies.utils.JsonUtils;
 import com.squareup.picasso.Picasso;
 
 import android.view.LayoutInflater;
@@ -16,10 +17,6 @@ import java.util.List;
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapterViewHolder> {
 
     private List<Movie> movies;
-
-    public MovieAdapter(List<Movie> movies) {
-        this.movies = movies;
-    }
 
     @NonNull
     @Override
@@ -47,11 +44,12 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
         public final ImageView moviePosterImageView;
         public MovieAdapterViewHolder(@NonNull View itemView) {
             super(itemView);
-            moviePosterImageView = (ImageView) itemView.findViewById(R.id.movie_item_poster);
+            moviePosterImageView = itemView.findViewById(R.id.movie_item_poster);
         }
     }
-    public void notifyAdapterDataSetChanged(List<Movie> movies) {
-        this.movies = movies;
+
+    public void notifyAdapterDataSetChanged(String apiResponse) {
+        movies = JsonUtils.parseMovies(apiResponse);
         notifyDataSetChanged();
     }
 }

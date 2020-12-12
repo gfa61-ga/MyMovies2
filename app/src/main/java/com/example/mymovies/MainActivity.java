@@ -16,7 +16,6 @@ import com.example.mymovies.utils.Utility;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    List<Movie> movies = null;
 
     private RecyclerView mRecyclerView;
     private MovieAdapter mMovieAdapter;
@@ -26,8 +25,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-        mRecyclerView = (RecyclerView) findViewById(R.id.recyclerview_movies);
+        mRecyclerView = findViewById(R.id.recyclerview_movies);
 
         int mNoOfColumns = Utility.calculateNoOfColumns(getApplicationContext(), 185);
         GridLayoutManager mGridLayoutManager = new GridLayoutManager(this, mNoOfColumns);
@@ -36,8 +34,9 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.setLayoutManager(mGridLayoutManager);
 
         mRecyclerView.setHasFixedSize(true);
+
+        mMovieAdapter = new MovieAdapter();
         loadMovies(R.string.most_popular_movies_json);
-        mMovieAdapter = new MovieAdapter(movies);
         mRecyclerView.setAdapter(mMovieAdapter);
     }
 
@@ -73,9 +72,8 @@ public class MainActivity extends AppCompatActivity {
         //    1. replace all  "  in the json object with  \"
         //    2. enclose the APIresponce json object between ""
         String apiResponse = getResources().getString(stringId);
-        movies = JsonUtils.parseMovies(apiResponse);
         if (mMovieAdapter != null) {
-            mMovieAdapter.notifyAdapterDataSetChanged(movies);
+            mMovieAdapter.notifyAdapterDataSetChanged(apiResponse);
         }
     }
 }
