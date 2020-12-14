@@ -7,7 +7,7 @@
         android:id="@+id/movie_item_poster"
         android:layout_width="match_parent"
         android:layout_height="278dp"
-        android:scaleType="centerCrop"
+        android:scaleType="fitXY"
         android:clickable="true"
         android:focusable="true"
         android:contentDescription="@string/movie_poster" />

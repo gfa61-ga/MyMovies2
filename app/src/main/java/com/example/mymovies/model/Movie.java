@@ -1,6 +1,9 @@
 package com.example.mymovies.model;
 
-public class Movie {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class Movie implements Parcelable {
     private String originalTitle;
     private String posterPath;
     private String overview;
@@ -52,4 +55,38 @@ public class Movie {
     }
 
     public void setDate(String releaseDate) { this.releaseDate = releaseDate; }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(originalTitle);
+        dest.writeString(posterPath);
+        dest.writeString(overview);
+        dest.writeString(voteAverage);
+        dest.writeString(releaseDate);
+    }
+    public static Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>(){
+
+        @Override
+        public Movie createFromParcel(Parcel source) {
+            return new Movie(source);
+        }
+
+        @Override
+        public Movie[] newArray(int size) {
+            return new Movie[0];
+        }
+    };
+
+    private Movie(Parcel source) {
+        originalTitle = source.readString();
+        posterPath = source.readString();
+        overview = source.readString();
+        voteAverage = source.readString();
+        releaseDate = source.readString();
+    }
 }

@@ -4,6 +4,7 @@ import com.example.mymovies.model.Movie;
 import com.example.mymovies.utils.JsonUtils;
 import com.squareup.picasso.Picasso;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,9 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapterViewHolder> {
@@ -48,8 +52,24 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
         }
     }
 
-    public void notifyAdapterDataSetChanged(String apiResponse) {
+    public void loadMovies(String apiResponse) {
         movies = JsonUtils.parseMovies(apiResponse);
+        Log.w("*************loadMonies","movies loaded from API");
         notifyDataSetChanged();
+    }
+
+    public void readNextPage(int page) { //TODO read more movies from API
+        List<Movie> newMovies = new ArrayList<>(movies.subList(0,20));
+        Log.w("******************page", String.valueOf(page));
+        movies.addAll(newMovies);
+        notifyDataSetChanged();
+    }
+
+    public List<Movie> getMovies() {
+        return movies;
+    }
+
+    public void setMovies(List<Movie> movies) {
+        this.movies = movies;
     }
 }
