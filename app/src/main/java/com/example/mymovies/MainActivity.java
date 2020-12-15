@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
@@ -19,12 +20,13 @@ import com.example.mymovies.utils.Utility;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler{
 
     private RecyclerView mRecyclerView;
     private MovieAdapter mMovieAdapter;
     private int selectedMovieCategoryId;
     private int page;
+    private Toast mToast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
         mRecyclerView.setHasFixedSize(true);
 
-        mMovieAdapter = new MovieAdapter();
+        mMovieAdapter = new MovieAdapter(this);
 
         if(savedInstanceState == null || !savedInstanceState.containsKey("movies")) {
             loadMovies();
@@ -123,5 +125,21 @@ public class MainActivity extends AppCompatActivity {
         outState.putInt("page", page);
         outState.putParcelableArrayList("movies", (ArrayList<Movie>) mMovieAdapter.getMovies());
         super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onClick(String message) {
+        if (mToast != null) {
+            mToast.cancel();
+        }
+
+        mToast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+        mToast.show();
+        launchMovieDetailsActivity(Integer.parseInt(message ));
+    }
+    private void launchMovieDetailsActivity(int position) {
+        Intent intent = new Intent(this, MovieDetailsActivity.class);
+        intent.putExtra(MovieDetailsActivity.MOVIE_INDEX, position);
+        startActivity(intent);
     }
 }

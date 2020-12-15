@@ -4,11 +4,14 @@ import com.example.mymovies.model.Movie;
 import com.example.mymovies.utils.JsonUtils;
 import com.squareup.picasso.Picasso;
 
+import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,10 +24,19 @@ import java.util.List;
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapterViewHolder> {
 
     private List<Movie> movies;
+    Context context;
+    private MovieAdapterOnClickHandler mClickHandler ;
 
+    interface MovieAdapterOnClickHandler {
+        void onClick(String message);
+    }
+    public MovieAdapter(MovieAdapterOnClickHandler mClickHandler) {
+        this.mClickHandler = mClickHandler;
+    }
     @NonNull
     @Override
     public MovieAdapterViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        context = parent.getContext();
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View itemView = inflater.inflate(R.layout.movie_list_item, parent, false);
         return new MovieAdapterViewHolder(itemView);
@@ -49,6 +61,12 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
         public MovieAdapterViewHolder(@NonNull View itemView) {
             super(itemView);
             moviePosterImageView = itemView.findViewById(R.id.movie_item_poster);
+            moviePosterImageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mClickHandler.onClick(String.valueOf(getAdapterPosition()));
+                }
+            });
         }
     }
 
@@ -72,4 +90,5 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
     public void setMovies(List<Movie> movies) {
         this.movies = movies;
     }
+
 }
