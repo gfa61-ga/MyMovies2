@@ -15,7 +15,8 @@
             android:label="Movie Details"
             android:parentActivityName="com.example.mymovies.MainActivity"
         />
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainActivity"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

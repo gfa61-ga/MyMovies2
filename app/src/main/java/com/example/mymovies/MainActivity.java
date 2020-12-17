@@ -6,6 +6,9 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
+import android.net.Uri;
+import android.net.UrlQuerySanitizer;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
@@ -17,8 +20,16 @@ import com.example.mymovies.model.Movie;
 import com.example.mymovies.utils.JsonUtils;
 import com.example.mymovies.utils.Utility;
 
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler{
 
@@ -32,6 +43,9 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if(savedInstanceState == null) {
+            Log.w("MainActivity new start", "*********************************************");
+        }
         if(savedInstanceState == null || !savedInstanceState.containsKey("selectedMovieCategoryId")) {
             selectedMovieCategoryId = R.string.most_popular_movies_json;
         }
@@ -70,9 +84,10 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
                 super.onScrollStateChanged(recyclerView, newState);
 
                 if (!recyclerView.canScrollVertically(1)) {
-                    Toast.makeText(MainActivity.this, "Last", Toast.LENGTH_LONG).show();
+                    //Toast.makeText(MainActivity.this, "Last", Toast.LENGTH_LONG).show();
                     page++;
-                    mMovieAdapter.readNextPage(page);
+                    //mMovieAdapter.readNextPage(page);
+                    loadMovies();
                 }
             }
         });
@@ -90,18 +105,23 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
+        item.setChecked(true);
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_order_most_popular) {
             selectedMovieCategoryId = R.string.most_popular_movies_json;
             page=1;
+            mMovieAdapter = new MovieAdapter(this);
+            mRecyclerView.setAdapter(mMovieAdapter);
             loadMovies();
             return true;
         }
         if (id == R.id.action_order_top_rated) {
             selectedMovieCategoryId = R.string.tor_rated_movies_json;
             page=1;
+            mMovieAdapter = new MovieAdapter(this);
+            mRecyclerView.setAdapter(mMovieAdapter);
             loadMovies();
             return true;
         }
@@ -113,10 +133,15 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         // to save an APIresponse to a string we must
         //    1. replace all  "  in the json object with  \"
         //    2. enclose the APIresponce json object between ""
-        String apiResponse = getResources().getString(selectedMovieCategoryId);
+        //String apiResponse = getResources().getString(selectedMovieCategoryId);
+
+        new ThemoviedbQueryTask().execute(selectedMovieCategoryId, page);
+
+        /*
         if (mMovieAdapter != null) {
             mMovieAdapter.loadMovies(apiResponse);
         }
+         */
     }
 
     @Override
@@ -134,7 +159,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         }
 
         mToast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
-        mToast.show();
+        //mToast.show();
         launchMovieDetailsActivity(Integer.parseInt(message ));
     }
     private void launchMovieDetailsActivity(int position) {
@@ -142,5 +167,71 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         intent.putExtra(MovieDetailsActivity.MOVIE_INDEX, position);
         intent.putExtra("movie", mMovieAdapter.getMovies().get(position));
         startActivity(intent);
+    }
+    public class ThemoviedbQueryTask extends AsyncTask <Integer, Void, String>{
+
+
+        @Override
+        protected String doInBackground(Integer... params) {
+            int currentSelectedMovieCategoryId = params[0];
+            int currentPage = params[1];
+
+            String sortBy = "";
+            if (currentSelectedMovieCategoryId == R.string.most_popular_movies_json) {
+                sortBy = "popular";
+            }
+            if (currentSelectedMovieCategoryId == R.string.tor_rated_movies_json) {
+                sortBy = "top_rated";
+            }
+
+            String baseUrl = "https://api.themoviedb.org/3/movie/" + sortBy;
+
+            Uri builtUri = Uri.parse(baseUrl).buildUpon()
+                    .appendQueryParameter("api_key", "???????")
+                    .appendQueryParameter("page", String.valueOf(currentPage))
+                    .build();
+            URL url = null;
+            try {
+                url = new URL(builtUri.toString());
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            // Log.w("******** url", url.toString());
+
+            try {
+                return getResponseFromHttpUrl(url);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+
+        }
+
+        public String getResponseFromHttpUrl(URL url) throws IOException {
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            try {
+                InputStream in = urlConnection.getInputStream();
+
+                Scanner scanner = new Scanner(in);
+                scanner.useDelimiter("\\A");
+
+                boolean hasInput = scanner.hasNext();
+                if (hasInput) {
+                    return scanner.next();
+                } else {
+                    return null;
+                }
+            } finally {
+                urlConnection.disconnect();
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String apiResponse) {
+            if (mMovieAdapter != null) {
+                mMovieAdapter.loadMovies(apiResponse);
+            }
+        }
+
     }
 }

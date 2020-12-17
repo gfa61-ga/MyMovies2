@@ -71,7 +71,12 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
     }
 
     public void loadMovies(String apiResponse) {
-        movies = JsonUtils.parseMovies(apiResponse);
+        List<Movie> newMovies = JsonUtils.parseMovies(apiResponse);
+        if (movies == null) {
+            movies = newMovies;
+        } else {
+            movies.addAll(newMovies);
+        }
         Log.w("*************loadMonies","movies loaded from API");
         notifyDataSetChanged();
     }
