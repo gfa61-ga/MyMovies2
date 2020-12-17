@@ -14,6 +14,7 @@ public class JsonUtils {
     public static Movie parseMovieJson(JSONObject movieJson) {
         String originalTitle = "";
         String posterPath = "";
+        String backdropPath = "";
         String overview = "";
         String voteAverage = "";
         String releaseDate = "";
@@ -21,6 +22,7 @@ public class JsonUtils {
         try {
             originalTitle = movieJson.getString("original_title");
             posterPath = movieJson.getString("poster_path");
+            backdropPath = movieJson.getString("backdrop_path");
             overview = movieJson.getString("overview");
             voteAverage = movieJson.getString("vote_average");
             releaseDate = movieJson.getString("release_date");
@@ -28,7 +30,7 @@ public class JsonUtils {
             e.printStackTrace();
         }
 
-        return new Movie(originalTitle, posterPath, overview, voteAverage, releaseDate);
+        return new Movie(originalTitle, posterPath, backdropPath, overview, voteAverage, releaseDate);
     }
 
     public static List<Movie> parseMovies(String apiResponse) {

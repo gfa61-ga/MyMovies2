@@ -140,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     private void launchMovieDetailsActivity(int position) {
         Intent intent = new Intent(this, MovieDetailsActivity.class);
         intent.putExtra(MovieDetailsActivity.MOVIE_INDEX, position);
+        intent.putExtra("movie", mMovieAdapter.getMovies().get(position));
         startActivity(intent);
     }
 }

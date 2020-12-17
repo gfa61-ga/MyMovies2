@@ -6,15 +6,17 @@ import android.os.Parcelable;
 public class Movie implements Parcelable {
     private String originalTitle;
     private String posterPath;
+    private String backdropPath;
     private String overview;
     private String voteAverage;
     private String releaseDate;
 
     private final String baseURL = "https://image.tmdb.org/t/p/w185";
 
-    public Movie(String originalTitle, String posterPath, String overview, String voteAverage, String releaseDate) {
+    public Movie(String originalTitle, String posterPath, String backdropPath, String overview, String voteAverage, String releaseDate) {
         this.originalTitle = originalTitle;
         this.posterPath = baseURL + posterPath;
+        this.backdropPath = baseURL + backdropPath;
         this.overview = overview;
         this.voteAverage = voteAverage;
         this.releaseDate = releaseDate;
@@ -36,6 +38,14 @@ public class Movie implements Parcelable {
         this.posterPath = baseURL + posterPath;
     }
 
+    public String getBackdropPath() {
+        return backdropPath;
+    }
+
+    public void setBackdropPath(String backdropPath) {
+        this.backdropPath = baseURL + backdropPath;
+    }
+
     public String getOverview() {
         return overview;
     }
@@ -50,11 +60,11 @@ public class Movie implements Parcelable {
 
     public void setVoteAverage(String voteAverage) { this.voteAverage = voteAverage; }
 
-    public String getDate() {
+    public String getReleaseDate() {
         return releaseDate;
     }
 
-    public void setDate(String releaseDate) { this.releaseDate = releaseDate; }
+    public void setReleaseDate(String releaseDate) { this.releaseDate = releaseDate; }
 
     @Override
     public int describeContents() {
@@ -65,6 +75,7 @@ public class Movie implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(originalTitle);
         dest.writeString(posterPath);
+        dest.writeString(backdropPath);
         dest.writeString(overview);
         dest.writeString(voteAverage);
         dest.writeString(releaseDate);
@@ -85,6 +96,7 @@ public class Movie implements Parcelable {
     private Movie(Parcel source) {
         originalTitle = source.readString();
         posterPath = source.readString();
+        backdropPath = source.readString();
         overview = source.readString();
         voteAverage = source.readString();
         releaseDate = source.readString();
