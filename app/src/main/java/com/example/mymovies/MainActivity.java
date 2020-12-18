@@ -14,6 +14,9 @@ import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.mymovies.model.Movie;
@@ -38,11 +41,17 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     private int selectedMovieCategoryId;
     private int page;
     private Toast mToast;
+    private TextView mErrorDisplayTextView;
+    private TextView mMoviesDisplayTextView;
+    private ProgressBar mProgressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mErrorDisplayTextView = (TextView) findViewById(R.id.tv_error_message_display);
+        mProgressBar = (ProgressBar) findViewById(R.id.pb_loading_indicator);
+
         if(savedInstanceState == null) {
             Log.w("MainActivity new start", "*********************************************");
         }
@@ -93,6 +102,17 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         });
     }
 
+    private void showJsonDataView() {
+        mRecyclerView.setVisibility(View.VISIBLE);
+        mErrorDisplayTextView.setVisibility(View.GONE);
+
+    }
+
+    private void showErrorMessage() {
+        mRecyclerView.setVisibility(View.GONE);
+        mErrorDisplayTextView.setVisibility(View.VISIBLE);
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -109,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_order_most_popular) {
+        if (id == R.id.action_order_most_popular && selectedMovieCategoryId != R.string.most_popular_movies_json) {
             selectedMovieCategoryId = R.string.most_popular_movies_json;
             page=1;
             mMovieAdapter = new MovieAdapter(this);
@@ -117,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
             loadMovies();
             return true;
         }
-        if (id == R.id.action_order_top_rated) {
+        if (id == R.id.action_order_top_rated && selectedMovieCategoryId != R.string.tor_rated_movies_json) {
             selectedMovieCategoryId = R.string.tor_rated_movies_json;
             page=1;
             mMovieAdapter = new MovieAdapter(this);
@@ -169,7 +189,11 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         startActivity(intent);
     }
     public class ThemoviedbQueryTask extends AsyncTask <Integer, Void, String>{
-
+        @Override
+        protected void onPreExecute() {
+            showJsonDataView();
+            mProgressBar.setVisibility(View.VISIBLE);
+        }
 
         @Override
         protected String doInBackground(Integer... params) {
@@ -209,6 +233,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
         public String getResponseFromHttpUrl(URL url) throws IOException {
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setConnectTimeout(1000);
+            urlConnection.setReadTimeout(1000);
             try {
                 InputStream in = urlConnection.getInputStream();
 
@@ -228,8 +254,20 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
         @Override
         protected void onPostExecute(String apiResponse) {
-            if (mMovieAdapter != null) {
+            mProgressBar.setVisibility(View.GONE);
+            if (apiResponse!= null) {
+                Log.w("api_responce", apiResponse);
+            }
+            if (mMovieAdapter != null && apiResponse != null) {
+                showJsonDataView();
                 mMovieAdapter.loadMovies(apiResponse);
+            } else {
+                if (page>1) {
+                    page--;
+                }
+                if(mMovieAdapter.getMovies()==null) {
+                    showErrorMessage();
+                }
             }
         }
 
