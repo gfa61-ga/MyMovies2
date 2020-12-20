@@ -2,6 +2,7 @@ package com.example.mymovies;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -11,6 +12,8 @@ import android.widget.TextView;
 import com.example.mymovies.model.Movie;
 import com.squareup.picasso.Picasso;
 
+import static android.text.Layout.JUSTIFICATION_MODE_INTER_WORD;
+
 public class MovieDetailsActivity extends AppCompatActivity {
     public static final String MOVIE_INDEX = "movie_index";
     Movie movie;
@@ -19,9 +22,9 @@ public class MovieDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie_details);
+
         if (getSupportActionBar() != null) {
             //getSupportActionBar().setHomeButtonEnabled(true);
-            //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
         movie =  getIntent().getParcelableExtra("movie");
@@ -38,6 +41,9 @@ public class MovieDetailsActivity extends AppCompatActivity {
         TextView overview = findViewById(R.id.overview);
         overview.setText(movie.getOverview());
 
+        if (Build.VERSION.SDK_INT >= 26) {
+            overview.setJustificationMode(JUSTIFICATION_MODE_INTER_WORD);
+        }
         TextView voteAverage = findViewById(R.id.vote_average);
         voteAverage.setText(movie.getVoteAverage() + "/10");
 

@@ -3,7 +3,7 @@
     <string name="action_order_most_popular">Most Popular</string>
     <string name="action_order_top_rated">Top Rated</string>
     <string name="error_message">
-        No internet connection. Please try again later.
+        No internet connection.\nPlease try again later.
     </string>
     <string name="most_popular_movies_json">
         most popular

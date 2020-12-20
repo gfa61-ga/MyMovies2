@@ -15,7 +15,7 @@
         <ImageView
             android:id="@+id/backdrop_image"
             android:layout_width="0dp"
-            android:layout_height="170dp"
+            android:layout_height="155dp"
             android:scaleType="fitXY"
             app:layout_constraintDimensionRatio="w,"
             app:layout_constraintEnd_toEndOf="parent"
@@ -25,10 +25,10 @@
 
         <ImageView
             android:id="@+id/poster_image"
-            android:layout_width="185dp"
-            android:layout_height="275dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
+            android:layout_width="140dp"
+            android:layout_height="208dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="10dp"
             android:scaleType="fitXY"
             app:layout_constraintBottom_toTopOf="@+id/overview"
             app:layout_constraintStart_toStartOf="parent"
@@ -40,10 +40,11 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="28dp"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="16dp"
             android:text="overview"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body2"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -68,6 +69,7 @@
             android:layout_marginTop="32dp"
             android:text="release_date"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            android:textStyle="bold"
             app:layout_constraintStart_toEndOf="@+id/divider"
             app:layout_constraintTop_toBottomOf="@+id/original_title" />
 
@@ -78,6 +80,7 @@
             android:layout_marginTop="32dp"
             android:text="vote_average"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textStyle="bold"
             app:layout_constraintStart_toEndOf="@+id/divider"
             app:layout_constraintTop_toBottomOf="@+id/release_date" />
 
@@ -85,7 +88,7 @@
             android:id="@+id/divider"
             android:layout_width="1dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="48dp"
             android:background="?android:attr/listDivider"
             android:visibility="invisible"
             app:layout_constraintBottom_toBottomOf="parent"

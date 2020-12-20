@@ -12,6 +12,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -36,14 +37,15 @@ import java.util.Scanner;
 
 public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler{
 
-    private RecyclerView mRecyclerView;
-    private MovieAdapter mMovieAdapter;
-    private int selectedMovieCategoryId;
+    private RecyclerView mMoviesDisplayRecyclerView;
+    private MovieAdapter mMoviesDisplayAdapter;
+    private int selectedMovieCategory;
     private int page;
     private Toast mToast;
     private TextView mErrorDisplayTextView;
-    private TextView mMoviesDisplayTextView;
     private ProgressBar mProgressBar;
+    private boolean internetConnection;
+    private boolean scrolledDown;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,61 +57,83 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         if(savedInstanceState == null) {
             Log.w("MainActivity new start", "*********************************************");
         }
-        if(savedInstanceState == null || !savedInstanceState.containsKey("selectedMovieCategoryId")) {
-            selectedMovieCategoryId = R.string.most_popular_movies_json;
+        if(savedInstanceState == null || !savedInstanceState.containsKey("selectedMovieCategory")) {
+            selectedMovieCategory = R.string.most_popular_movies_json;
         }
         else {
-            selectedMovieCategoryId = savedInstanceState.getInt("selectedMovieCategoryId");
+            selectedMovieCategory = savedInstanceState.getInt("selectedMovieCategory");
         }
+        if(savedInstanceState == null || !savedInstanceState.containsKey("internetConnection")) {
+            internetConnection = true;
+        }
+        else {
+            internetConnection = savedInstanceState.getBoolean("internetConnection");
+        }
+
         if(savedInstanceState == null || !savedInstanceState.containsKey("page")) {
             page=1;
         }
         else {
             page = savedInstanceState.getInt("page");
         }
-        mRecyclerView = findViewById(R.id.recyclerview_movies);
+        mMoviesDisplayRecyclerView = findViewById(R.id.recyclerview_movies);
 
         int mNoOfColumns = Utility.calculateNoOfColumns(getApplicationContext(), 185);
         GridLayoutManager mGridLayoutManager = new GridLayoutManager(this, mNoOfColumns);
         mGridLayoutManager.setReverseLayout(false);
         mGridLayoutManager.canScrollVertically();
-        mRecyclerView.setLayoutManager(mGridLayoutManager);
+        mMoviesDisplayRecyclerView.setLayoutManager(mGridLayoutManager);
 
-        mRecyclerView.setHasFixedSize(true);
+        mMoviesDisplayRecyclerView.setHasFixedSize(true);
 
-        mMovieAdapter = new MovieAdapter(this);
+        mMoviesDisplayAdapter = new MovieAdapter(this);
 
         if(savedInstanceState == null || !savedInstanceState.containsKey("movies")) {
             loadMovies();
         }
         else {
-            mMovieAdapter.setMovies(savedInstanceState.getParcelableArrayList("movies"));
+            mMoviesDisplayAdapter.setMovies(savedInstanceState.getParcelableArrayList("movies"));
         }
 
-        mRecyclerView.setAdapter(mMovieAdapter);
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        mMoviesDisplayRecyclerView.setAdapter(mMoviesDisplayAdapter);
+        mMoviesDisplayRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
 
-                if (!recyclerView.canScrollVertically(1)) {
+                if (!recyclerView.canScrollVertically(1) && scrolledDown ) {
                     //Toast.makeText(MainActivity.this, "Last", Toast.LENGTH_LONG).show();
                     page++;
-                    //mMovieAdapter.readNextPage(page);
+                    scrolledDown = false;
+                    //mMoviesDisplayAdapter.readNextPage(page);
                     loadMovies();
                 }
             }
+
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+
+                if (dy > 0) {
+                    scrolledDown = true;
+                } else if (dy < 0) {
+                    scrolledDown = false;
+                }
+            }
         });
+        if (internetConnection == false && mMoviesDisplayAdapter.getMovies() == null) {
+            showErrorMessage();
+        } else {
+            showJsonDataView();
+        }
     }
 
     private void showJsonDataView() {
-        mRecyclerView.setVisibility(View.VISIBLE);
+        mMoviesDisplayRecyclerView.setVisibility(View.VISIBLE);
         mErrorDisplayTextView.setVisibility(View.GONE);
 
     }
 
     private void showErrorMessage() {
-        mRecyclerView.setVisibility(View.GONE);
+        mMoviesDisplayRecyclerView.setVisibility(View.GONE);
         mErrorDisplayTextView.setVisibility(View.VISIBLE);
     }
 
@@ -129,19 +153,19 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_order_most_popular && selectedMovieCategoryId != R.string.most_popular_movies_json) {
-            selectedMovieCategoryId = R.string.most_popular_movies_json;
+        if (id == R.id.action_order_most_popular && (selectedMovieCategory != R.string.most_popular_movies_json||mMoviesDisplayAdapter.getMovies() == null)) {
+            selectedMovieCategory = R.string.most_popular_movies_json;
             page=1;
-            mMovieAdapter = new MovieAdapter(this);
-            mRecyclerView.setAdapter(mMovieAdapter);
+            mMoviesDisplayAdapter = new MovieAdapter(this);
+            mMoviesDisplayRecyclerView.setAdapter(mMoviesDisplayAdapter);
             loadMovies();
             return true;
         }
-        if (id == R.id.action_order_top_rated && selectedMovieCategoryId != R.string.tor_rated_movies_json) {
-            selectedMovieCategoryId = R.string.tor_rated_movies_json;
+        if (id == R.id.action_order_top_rated && (selectedMovieCategory != R.string.tor_rated_movies_json||mMoviesDisplayAdapter.getMovies() == null)) {
+            selectedMovieCategory = R.string.tor_rated_movies_json;
             page=1;
-            mMovieAdapter = new MovieAdapter(this);
-            mRecyclerView.setAdapter(mMovieAdapter);
+            mMoviesDisplayAdapter = new MovieAdapter(this);
+            mMoviesDisplayRecyclerView.setAdapter(mMoviesDisplayAdapter);
             loadMovies();
             return true;
         }
@@ -153,22 +177,23 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         // to save an APIresponse to a string we must
         //    1. replace all  "  in the json object with  \"
         //    2. enclose the APIresponce json object between ""
-        //String apiResponse = getResources().getString(selectedMovieCategoryId);
+        //String apiResponse = getResources().getString(selectedMovieCategory);
 
-        new ThemoviedbQueryTask().execute(selectedMovieCategoryId, page);
+        new ThemoviedbQueryTask().execute(selectedMovieCategory, page);
 
         /*
-        if (mMovieAdapter != null) {
-            mMovieAdapter.loadMovies(apiResponse);
+        if (mMoviesDisplayAdapter != null) {
+            mMoviesDisplayAdapter.loadMovies(apiResponse);
         }
          */
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putInt("selectedMovieCategoryId", selectedMovieCategoryId);
+        outState.putInt("selectedMovieCategory", selectedMovieCategory);
         outState.putInt("page", page);
-        outState.putParcelableArrayList("movies", (ArrayList<Movie>) mMovieAdapter.getMovies());
+        outState.putParcelableArrayList("movies", (ArrayList<Movie>) mMoviesDisplayAdapter.getMovies());
+        outState.putBoolean("internetConnection",internetConnection);
         super.onSaveInstanceState(outState);
     }
 
@@ -185,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     private void launchMovieDetailsActivity(int position) {
         Intent intent = new Intent(this, MovieDetailsActivity.class);
         intent.putExtra(MovieDetailsActivity.MOVIE_INDEX, position);
-        intent.putExtra("movie", mMovieAdapter.getMovies().get(position));
+        intent.putExtra("movie", mMoviesDisplayAdapter.getMovies().get(position));
         startActivity(intent);
     }
     public class ThemoviedbQueryTask extends AsyncTask <Integer, Void, String>{
@@ -197,22 +222,24 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
         @Override
         protected String doInBackground(Integer... params) {
-            int currentSelectedMovieCategoryId = params[0];
+            int currentselectedMovieCategory = params[0];
             int currentPage = params[1];
 
             String sortBy = "";
-            if (currentSelectedMovieCategoryId == R.string.most_popular_movies_json) {
+            if (currentselectedMovieCategory == R.string.most_popular_movies_json) {
                 sortBy = "popular";
             }
-            if (currentSelectedMovieCategoryId == R.string.tor_rated_movies_json) {
+            if (currentselectedMovieCategory == R.string.tor_rated_movies_json) {
                 sortBy = "top_rated";
             }
 
             String baseUrl = "https://api.themoviedb.org/3/movie/" + sortBy;
 
             Uri builtUri = Uri.parse(baseUrl).buildUpon()
-                    .appendQueryParameter("api_key", "???????")
+                    .appendQueryParameter("api_key", "?????????")
                     .appendQueryParameter("page", String.valueOf(currentPage))
+                    //.appendQueryParameter("language", "el")
+                    //.appendQueryParameter("with_genres", "10749")
                     .build();
             URL url = null;
             try {
@@ -258,15 +285,21 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
             if (apiResponse!= null) {
                 Log.w("api_responce", apiResponse);
             }
-            if (mMovieAdapter != null && apiResponse != null) {
+            if (mMoviesDisplayAdapter != null && apiResponse != null) {
                 showJsonDataView();
-                mMovieAdapter.loadMovies(apiResponse);
+                mMoviesDisplayAdapter.loadMovies(apiResponse);
             } else {
                 if (page>1) {
                     page--;
+                    internetConnection = true;
+                    Toast toast = Toast.makeText(MainActivity.this, R.string.error_message, Toast.LENGTH_LONG);
+                    TextView v = (TextView) toast.getView().findViewById(android.R.id.message);
+                    if( v != null) v.setGravity(Gravity.CENTER);
+                    toast.show();
                 }
-                if(mMovieAdapter.getMovies()==null) {
+                if(mMoviesDisplayAdapter.getMovies()==null) {
                     showErrorMessage();
+                    internetConnection = false;
                 }
             }
         }
