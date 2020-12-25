@@ -4,7 +4,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -15,60 +14,41 @@ import com.squareup.picasso.Picasso;
 import static android.text.Layout.JUSTIFICATION_MODE_INTER_WORD;
 
 public class MovieDetailsActivity extends AppCompatActivity {
-    public static final String MOVIE_INDEX = "movie_index";
-    Movie movie;
+    Movie mMovie;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie_details);
 
-        if (getSupportActionBar() != null) {
-            //getSupportActionBar().setHomeButtonEnabled(true);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
-        movie =  getIntent().getParcelableExtra("movie");
+        mMovie =  getIntent().getParcelableExtra("movie");
 
         ImageView backdropImageView = findViewById(R.id.backdrop_image);
-        Picasso.get().load(movie.getBackdropPath()).into(backdropImageView);
+        Picasso.get().load(mMovie.getBackdropPath()).into(backdropImageView);
 
         ImageView posterImageView = findViewById(R.id.poster_image);
-        Picasso.get().load(movie.getPosterPath()).into(posterImageView);
+        Picasso.get().load(mMovie.getPosterPath()).into(posterImageView);
 
         TextView originalTitle = findViewById(R.id.original_title);
-        originalTitle.setText(movie.getOriginalTitle());
+        originalTitle.setText(mMovie.getOriginalTitle());
 
         TextView overview = findViewById(R.id.overview);
-        overview.setText(movie.getOverview());
-
+        overview.setText(mMovie.getOverview());
         if (Build.VERSION.SDK_INT >= 26) {
             overview.setJustificationMode(JUSTIFICATION_MODE_INTER_WORD);
         }
+
         TextView voteAverage = findViewById(R.id.vote_average);
-        voteAverage.setText(movie.getVoteAverage() + "/10");
+        voteAverage.setText(mMovie.getVoteAverage() + "/10");
 
         TextView releaseDate = findViewById(R.id.release_date);
-        releaseDate.setText(movie.getReleaseDate().substring(0,4));
+        releaseDate.setText(mMovie.getReleaseDate().substring(0,4));
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_movie_details, menu);
         return true;
     }
-    /*
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Log.w("back item id", String.valueOf(item.getItemId()));
-        // Log.w("androiditem id", String.valueOf(android.R.id.home));
-
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                // app icon in action bar clicked; goto parent activity.
-                this.finish();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }*/
 }

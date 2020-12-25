@@ -5,11 +5,5 @@
     <string name="error_message">
         No internet connection.\nPlease try again later.
     </string>
-    <string name="most_popular_movies_json">
-        most popular
-    </string>
-    <string name="tor_rated_movies_json">
-        top rated
-    </string>
     <string name="movie_poster">movie poster</string>
 </resources>

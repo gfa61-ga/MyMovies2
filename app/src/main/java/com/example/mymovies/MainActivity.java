@@ -5,13 +5,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
-import android.net.UrlQuerySanitizer;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcelable;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,105 +19,93 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.mymovies.model.Movie;
-import com.example.mymovies.utils.JsonUtils;
-import com.example.mymovies.utils.Utility;
+import com.example.mymovies.utils.LayoutUtils;
+import com.example.mymovies.utils.NetworkUtils;
 
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
 
-public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler{
+public class MainActivity extends AppCompatActivity implements MovieAdapter.OnClickHandler{
 
-    private RecyclerView mMoviesDisplayRecyclerView;
-    private MovieAdapter mMoviesDisplayAdapter;
-    private int selectedMovieCategory;
-    private int page;
-    private Toast mToast;
-    private TextView mErrorDisplayTextView;
+    private RecyclerView moviesDisplayRecyclerView;
+    private MovieAdapter moviesDisplayAdapter;
+    private TextView errorDisplayTextView;
     private ProgressBar mProgressBar;
+    private GridLayoutManager mGridLayoutManager;
+    private Toast mToast;
+    private Context context;
+    private MovieAdapter.OnClickHandler mClickHandler;
+    private String sortByPath;
+    private int apiPage;
     private boolean internetConnection;
-    private boolean scrolledDown;
+    private boolean MoviesDisplayScrolledDown;
+
+    private final String SORT_BY_POPULAR_API_PATH = "popular";
+    private final String SORT_BY_TOP_RATED_API_PATH = "top_rated";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mErrorDisplayTextView = (TextView) findViewById(R.id.tv_error_message_display);
+
+        errorDisplayTextView = (TextView) findViewById(R.id.tv_error_message_display);
         mProgressBar = (ProgressBar) findViewById(R.id.pb_loading_indicator);
+        moviesDisplayRecyclerView = findViewById(R.id.recyclerview_movies);
 
-        if(savedInstanceState == null) {
-            Log.w("MainActivity new start", "*********************************************");
-        }
-        if(savedInstanceState == null || !savedInstanceState.containsKey("selectedMovieCategory")) {
-            selectedMovieCategory = R.string.most_popular_movies_json;
-        }
-        else {
-            selectedMovieCategory = savedInstanceState.getInt("selectedMovieCategory");
-        }
-        if(savedInstanceState == null || !savedInstanceState.containsKey("internetConnection")) {
-            internetConnection = true;
-        }
-        else {
-            internetConnection = savedInstanceState.getBoolean("internetConnection");
-        }
+        final int COLUMN_WIDTH_DP  = 250;
+        int numOfColumns = LayoutUtils.calculateNoOfColumns(getApplicationContext(), COLUMN_WIDTH_DP);
 
-        if(savedInstanceState == null || !savedInstanceState.containsKey("page")) {
-            page=1;
-        }
-        else {
-            page = savedInstanceState.getInt("page");
-        }
-        mMoviesDisplayRecyclerView = findViewById(R.id.recyclerview_movies);
-
-        int mNoOfColumns = Utility.calculateNoOfColumns(getApplicationContext(), 185);
-        GridLayoutManager mGridLayoutManager = new GridLayoutManager(this, mNoOfColumns);
+        context = this;
+        mGridLayoutManager = new GridLayoutManager(context, numOfColumns);
         mGridLayoutManager.setReverseLayout(false);
         mGridLayoutManager.canScrollVertically();
-        mMoviesDisplayRecyclerView.setLayoutManager(mGridLayoutManager);
+        moviesDisplayRecyclerView.setLayoutManager(mGridLayoutManager);
+        moviesDisplayRecyclerView.setHasFixedSize(true);
 
-        mMoviesDisplayRecyclerView.setHasFixedSize(true);
+        mClickHandler = this;
+        moviesDisplayAdapter = new MovieAdapter(mClickHandler, mGridLayoutManager);
+        moviesDisplayRecyclerView.setAdapter(moviesDisplayAdapter);
 
-        mMoviesDisplayAdapter = new MovieAdapter(this);
-
-        if(savedInstanceState == null || !savedInstanceState.containsKey("movies")) {
-            loadMovies();
+        if(savedInstanceState != null) {
+            if (savedInstanceState.containsKey("sortByPath"))
+                sortByPath = savedInstanceState.getString("sortByPath");
+            if (savedInstanceState.containsKey("internetConnection"))
+                internetConnection = savedInstanceState.getBoolean("internetConnection");
+            if (savedInstanceState.containsKey("apiPage"))
+                apiPage = savedInstanceState.getInt("apiPage");
+            if (savedInstanceState.containsKey("movies")) {
+                moviesDisplayAdapter.setMovies(savedInstanceState.getParcelableArrayList("movies"));
+                moviesDisplayAdapter.notifyDataSetChanged();
+            }
+        } else {
+            sortByPath = SORT_BY_POPULAR_API_PATH;
+            apiPage = 0;
+            loadNextPageOfMovies();
         }
-        else {
-            mMoviesDisplayAdapter.setMovies(savedInstanceState.getParcelableArrayList("movies"));
-        }
 
-        mMoviesDisplayRecyclerView.setAdapter(mMoviesDisplayAdapter);
-        mMoviesDisplayRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        moviesDisplayRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
 
-                if (!recyclerView.canScrollVertically(1) && scrolledDown ) {
-                    //Toast.makeText(MainActivity.this, "Last", Toast.LENGTH_LONG).show();
-                    page++;
-                    scrolledDown = false;
-                    //mMoviesDisplayAdapter.readNextPage(page);
-                    loadMovies();
+                if (!recyclerView.canScrollVertically(1) && MoviesDisplayScrolledDown ) {
+                    apiPage++;
+                    MoviesDisplayScrolledDown = false;
+
+                    loadNextPageOfMovies();
                 }
             }
 
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-
                 if (dy > 0) {
-                    scrolledDown = true;
+                    MoviesDisplayScrolledDown = true;
                 } else if (dy < 0) {
-                    scrolledDown = false;
+                    MoviesDisplayScrolledDown = false;
                 }
             }
         });
-        if (internetConnection == false && mMoviesDisplayAdapter.getMovies() == null) {
+
+        if (!internetConnection && moviesDisplayAdapter.getMovies() == null) {
             showErrorMessage();
         } else {
             showJsonDataView();
@@ -127,20 +113,22 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     }
 
     private void showJsonDataView() {
-        mMoviesDisplayRecyclerView.setVisibility(View.VISIBLE);
-        mErrorDisplayTextView.setVisibility(View.GONE);
-
+        moviesDisplayRecyclerView.setVisibility(View.VISIBLE);
+        errorDisplayTextView.setVisibility(View.GONE);
     }
 
     private void showErrorMessage() {
-        mMoviesDisplayRecyclerView.setVisibility(View.GONE);
-        mErrorDisplayTextView.setVisibility(View.VISIBLE);
+        moviesDisplayRecyclerView.setVisibility(View.GONE);
+        errorDisplayTextView.setVisibility(View.VISIBLE);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        if (sortByPath.equals(SORT_BY_TOP_RATED_API_PATH)) {
+            menu.findItem(R.id.action_order_top_rated).setChecked(true);
+        }
         return true;
     }
 
@@ -151,69 +139,46 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         // as you specify a parent activity in AndroidManifest.xml.
         item.setChecked(true);
         int id = item.getItemId();
+        
+        String selectedSortByPath = SORT_BY_POPULAR_API_PATH;
+        if (id == R.id.action_order_top_rated) {
+            selectedSortByPath = SORT_BY_TOP_RATED_API_PATH;
+        }
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_order_most_popular && (selectedMovieCategory != R.string.most_popular_movies_json||mMoviesDisplayAdapter.getMovies() == null)) {
-            selectedMovieCategory = R.string.most_popular_movies_json;
-            page=1;
-            mMoviesDisplayAdapter = new MovieAdapter(this);
-            mMoviesDisplayRecyclerView.setAdapter(mMoviesDisplayAdapter);
-            loadMovies();
+        if (!selectedSortByPath.equals(sortByPath) || moviesDisplayAdapter.getMovies() == null) {
+            sortByPath = selectedSortByPath;
+            apiPage=0;
+            moviesDisplayAdapter = new MovieAdapter(mClickHandler, mGridLayoutManager);
+            moviesDisplayRecyclerView.setAdapter(moviesDisplayAdapter);
+            loadNextPageOfMovies();
             return true;
         }
-        if (id == R.id.action_order_top_rated && (selectedMovieCategory != R.string.tor_rated_movies_json||mMoviesDisplayAdapter.getMovies() == null)) {
-            selectedMovieCategory = R.string.tor_rated_movies_json;
-            page=1;
-            mMoviesDisplayAdapter = new MovieAdapter(this);
-            mMoviesDisplayRecyclerView.setAdapter(mMoviesDisplayAdapter);
-            loadMovies();
-            return true;
-        }
+
         return super.onOptionsItemSelected(item);
-    }
-
-    private void loadMovies() {
-        // we temporary saved APIresponses to res/layout/strings.xml strings
-        // to save an APIresponse to a string we must
-        //    1. replace all  "  in the json object with  \"
-        //    2. enclose the APIresponce json object between ""
-        //String apiResponse = getResources().getString(selectedMovieCategory);
-
-        new ThemoviedbQueryTask().execute(selectedMovieCategory, page);
-
-        /*
-        if (mMoviesDisplayAdapter != null) {
-            mMoviesDisplayAdapter.loadMovies(apiResponse);
-        }
-         */
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putInt("selectedMovieCategory", selectedMovieCategory);
-        outState.putInt("page", page);
-        outState.putParcelableArrayList("movies", (ArrayList<Movie>) mMoviesDisplayAdapter.getMovies());
+        outState.putString("sortByPath", sortByPath);
+        outState.putInt("apiPage", apiPage);
+        outState.putParcelableArrayList("movies", (ArrayList<Movie>) moviesDisplayAdapter.getMovies());
         outState.putBoolean("internetConnection",internetConnection);
         super.onSaveInstanceState(outState);
     }
 
     @Override
-    public void onClick(String message) {
-        if (mToast != null) {
-            mToast.cancel();
-        }
-
-        mToast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
-        //mToast.show();
-        launchMovieDetailsActivity(Integer.parseInt(message ));
+    public void onClick(Movie movie) {
+        launchMovieDetailsActivity(movie);
     }
-    private void launchMovieDetailsActivity(int position) {
-        Intent intent = new Intent(this, MovieDetailsActivity.class);
-        intent.putExtra(MovieDetailsActivity.MOVIE_INDEX, position);
-        intent.putExtra("movie", mMoviesDisplayAdapter.getMovies().get(position));
+
+    private void launchMovieDetailsActivity(Movie movie) {
+        Intent intent = new Intent(context, MovieDetailsActivity.class);
+        intent.putExtra("movie", movie);
         startActivity(intent);
     }
-    public class ThemoviedbQueryTask extends AsyncTask <Integer, Void, String>{
+
+    @SuppressLint("StaticFieldLeak")
+    public class ThemoviedbQueryTask extends AsyncTask <String, Void, String>{
         @Override
         protected void onPreExecute() {
             showJsonDataView();
@@ -221,88 +186,48 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         }
 
         @Override
-        protected String doInBackground(Integer... params) {
-            int currentselectedMovieCategory = params[0];
-            int currentPage = params[1];
+        protected String doInBackground(String... params) {
+            String selectedSortByPath = params[0];
+            String apiPageToQuery = params[1];
 
-            String sortBy = "";
-            if (currentselectedMovieCategory == R.string.most_popular_movies_json) {
-                sortBy = "popular";
-            }
-            if (currentselectedMovieCategory == R.string.tor_rated_movies_json) {
-                sortBy = "top_rated";
-            }
-
-            String baseUrl = "https://api.themoviedb.org/3/movie/" + sortBy;
-
-            Uri builtUri = Uri.parse(baseUrl).buildUpon()
-                    .appendQueryParameter("api_key", "?????????")
-                    .appendQueryParameter("page", String.valueOf(currentPage))
-                    //.appendQueryParameter("language", "el")
-                    //.appendQueryParameter("with_genres", "10749")
-                    .build();
-            URL url = null;
+            URL url = NetworkUtils.buildUrl(selectedSortByPath, apiPageToQuery);
             try {
-                url = new URL(builtUri.toString());
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-            // Log.w("******** url", url.toString());
-
-            try {
-                return getResponseFromHttpUrl(url);
+                return NetworkUtils.getResponseFromHttpUrl(url);
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
-            }
-
-        }
-
-        public String getResponseFromHttpUrl(URL url) throws IOException {
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setConnectTimeout(1000);
-            urlConnection.setReadTimeout(1000);
-            try {
-                InputStream in = urlConnection.getInputStream();
-
-                Scanner scanner = new Scanner(in);
-                scanner.useDelimiter("\\A");
-
-                boolean hasInput = scanner.hasNext();
-                if (hasInput) {
-                    return scanner.next();
-                } else {
-                    return null;
-                }
-            } finally {
-                urlConnection.disconnect();
             }
         }
 
         @Override
         protected void onPostExecute(String apiResponse) {
             mProgressBar.setVisibility(View.GONE);
-            if (apiResponse!= null) {
-                Log.w("api_responce", apiResponse);
-            }
-            if (mMoviesDisplayAdapter != null && apiResponse != null) {
+            if (apiResponse != null) {
+                apiPage++;
+                internetConnection = true;
                 showJsonDataView();
-                mMoviesDisplayAdapter.loadMovies(apiResponse);
+                moviesDisplayAdapter.loadMoreMovies(apiResponse);
             } else {
-                if (page>1) {
-                    page--;
-                    internetConnection = true;
-                    Toast toast = Toast.makeText(MainActivity.this, R.string.error_message, Toast.LENGTH_LONG);
-                    TextView v = (TextView) toast.getView().findViewById(android.R.id.message);
+                if (apiPage>=1) {
+                    if (mToast != null) {
+                        mToast.cancel();
+                    }
+                    Context toastContext = MainActivity.this;
+                    String errorMessage = "No internet connection.\\nPlease try again later.";
+                    mToast = Toast.makeText(toastContext, errorMessage, Toast.LENGTH_LONG);
+                    TextView v = (TextView) mToast.getView().findViewById(android.R.id.message);
                     if( v != null) v.setGravity(Gravity.CENTER);
-                    toast.show();
-                }
-                if(mMoviesDisplayAdapter.getMovies()==null) {
+                    mToast.show();
+                } else {
                     showErrorMessage();
                     internetConnection = false;
                 }
             }
         }
+    }
 
+    private void loadNextPageOfMovies() {
+        String apiPageToQuery = String.valueOf(apiPage+1);
+        new ThemoviedbQueryTask().execute(sortByPath, apiPageToQuery);
     }
 }

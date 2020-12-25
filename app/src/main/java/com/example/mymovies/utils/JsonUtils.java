@@ -11,7 +11,7 @@ import java.util.List;
 
 public class JsonUtils {
 
-    public static Movie parseMovieJson(JSONObject movieJson) {
+    public static Movie parseMovieFromJson(JSONObject movieJson) {
         String originalTitle = "";
         String posterPath = "";
         String backdropPath = "";
@@ -41,7 +41,7 @@ public class JsonUtils {
 
             for (int index = 0; index < results.length(); index++) {
                 JSONObject movieJson = results.getJSONObject(index);
-                Movie movie = parseMovieJson(movieJson);
+                Movie movie = parseMovieFromJson(movieJson);
                 movies.add(movie);
             }
         } catch (JSONException e) {
