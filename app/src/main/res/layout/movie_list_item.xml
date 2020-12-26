@@ -3,6 +3,7 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
+    <!-- API posters have height equal to 278 dpi -->
     <ImageView
         android:id="@+id/movie_item_poster"
         android:layout_width="match_parent"

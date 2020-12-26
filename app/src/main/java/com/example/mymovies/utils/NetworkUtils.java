@@ -10,24 +10,24 @@ import java.net.URL;
 import java.util.Scanner;
 
 public class NetworkUtils {
-    private static final String FORECAST_BASE_URL = "https://api.themoviedb.org/3/movie/";
-
+    // The following are defined by the Movie DB API:
+    private static final String THE_MOVIE_DB_BASE_URL = "https://api.themoviedb.org/3/movie/";
     final static String PAGE_PARAM = "page";
     final static String API_KEY_PARAM = "api_key";
-    final static String LANGUAGE_PARAM = "language";    
+    final static String LANGUAGE_PARAM = "language";
     final static String GENRES_PARAM = "with_genres";
 
     // Our API KEY
-    private static final String apiKey = "My_API_Key";
+    private static final String apiKey = "MyApiKey";
 
     // An ISO 639-1 value to display translated data for the fields that support it
     private static final String languageIsoCode = "el";
 
-    // Url to get a list of genres:  https://api.themoviedb.org/3/genre/movie/list?api_key=apiKey
+    // Url to get a list of API genres:  https://api.themoviedb.org/3/genre/movie/list?api_key=OurApiKey
     private static final String genresList = "10749,14";
 
     public static URL buildUrl(String sortByPath, String apiPage) {
-        String baseUrl =  FORECAST_BASE_URL + sortByPath;
+        String baseUrl =  THE_MOVIE_DB_BASE_URL + sortByPath;
 
         Uri builtUri = Uri.parse(baseUrl).buildUpon()
                 .appendQueryParameter(PAGE_PARAM, apiPage)

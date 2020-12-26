@@ -13,11 +13,12 @@ public class Movie implements Parcelable {
 
     public Movie(String originalTitle, String posterPath, String backdropPath,
                  String overview, String voteAverage, String releaseDate) {
-        String baseURL = "https://image.tmdb.org/t/p/w185";
-        this.posterPath = baseURL + posterPath;
+        // w185 is the path for getting an image with 185 dpi width
+        final String IMAGES_BASE_URL = "https://image.tmdb.org/t/p/w185";
 
+        this.posterPath = IMAGES_BASE_URL + posterPath;
         this.originalTitle = originalTitle;
-        this.backdropPath = baseURL + backdropPath;
+        this.backdropPath = IMAGES_BASE_URL + backdropPath;
         this.overview = overview;
         this.voteAverage = voteAverage;
         this.releaseDate = releaseDate;
