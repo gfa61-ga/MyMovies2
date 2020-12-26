@@ -2,6 +2,7 @@ package com.example.mymovies;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
@@ -16,6 +17,7 @@ import static android.text.Layout.JUSTIFICATION_MODE_INTER_WORD;
 public class MovieDetailsActivity extends AppCompatActivity {
     Movie mMovie;
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,9 +47,12 @@ public class MovieDetailsActivity extends AppCompatActivity {
         releaseDate.setText(mMovie.getReleaseDate().substring(0,4));
     }
 
+    /** Adds items to the action bar if it is present.The action bar will
+     * automatically handle clicks on the Home/Up button, so long
+     * as we specify a parent activity in AndroidManifest.xml. */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+        // Inflates an empty menu with an automatically created Home/Up button;
         getMenuInflater().inflate(R.menu.menu_movie_details, menu);
         return true;
     }
