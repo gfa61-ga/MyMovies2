@@ -179,6 +179,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
         super.onSaveInstanceState(outState);
     }
 
+    /** Handles MovieViewHolders moviePosterImageView clicks. */
     @Override
     public void onClick(Movie movie) {
         launchMovieDetailsActivity(movie);
@@ -190,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
         startActivity(intent);
     }
 
-    /** Defines an AsyncTask instance, which tries to load the next page of movies */
+    /** Defines an asynchronous  ThemoviedbQueryTask instance, which queries the next page of movies */
     @SuppressLint("StaticFieldLeak")
     public class ThemoviedbQueryTask extends AsyncTask <String, Void, String>{
         @Override
@@ -242,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
         }
     }
 
-    /** Creates and executes the AsyncTask instance */
+    /** Creates and asynchronously executes the ThemoviedbQueryTask instance */
     private void loadNextPageOfMovies() {
         String apiPageToQuery = String.valueOf(apiPage+1);
         new ThemoviedbQueryTask().execute(sortByApiPath, apiPageToQuery);
