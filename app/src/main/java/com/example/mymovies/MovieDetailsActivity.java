@@ -45,7 +45,7 @@ public class MovieDetailsActivity extends AppCompatActivity {
         TextView releaseDate = findViewById(R.id.release_date);
         String releaseDateString =  mMovie.getReleaseDate();
         if (releaseDateString.length()>0) {
-        releaseDate.setText(releaseDateString.substring(0, 4));
+            releaseDate.setText(releaseDateString.substring(0, 4));
         } else  {
             releaseDate.setText("");
         }
