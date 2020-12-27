@@ -3,6 +3,9 @@ package com.example.mymovies.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+/** Implements Parcelable so that movies can be serialized
+ * and passed through savedInstanceState bundles and through Intent extras
+ */
 public class Movie implements Parcelable {
     private final String originalTitle;
     private final String posterPath;
@@ -11,6 +14,7 @@ public class Movie implements Parcelable {
     private final String voteAverage;
     private final String releaseDate;
 
+    /* Constructor that creates new movie from movieData */
     public Movie(String originalTitle, String posterPath, String backdropPath,
                  String overview, String voteAverage, String releaseDate) {
         // w185 is the path for getting an image with 185 dpi width
@@ -24,28 +28,26 @@ public class Movie implements Parcelable {
         this.releaseDate = releaseDate;
     }
 
-    public String getOriginalTitle() {
-        return originalTitle;
-    }
+    public String getOriginalTitle() { return originalTitle; }
 
-    public String getPosterPath() {
-        return posterPath;
-    }
+    public String getPosterPath() { return posterPath; }
 
-    public String getBackdropPath() {
-        return backdropPath;
-    }
+    public String getBackdropPath() { return backdropPath; }
 
-    public String getOverview() {
-        return overview;
-    }
+    public String getOverview() { return overview; }
 
-    public String getVoteAverage() {
-        return voteAverage;
-    }
+    public String getVoteAverage() { return voteAverage; }
 
-    public String getReleaseDate() {
-        return releaseDate;
+    public String getReleaseDate() { return releaseDate; }
+
+    /* Constructor that creates new movie from parcelSource */
+    private Movie(Parcel source) {
+        originalTitle = source.readString();
+        posterPath = source.readString();
+        backdropPath = source.readString();
+        overview = source.readString();
+        voteAverage = source.readString();
+        releaseDate = source.readString();
     }
 
     @Override
@@ -74,13 +76,4 @@ public class Movie implements Parcelable {
             return new Movie[0];
         }
     };
-
-    private Movie(Parcel source) {
-        originalTitle = source.readString();
-        posterPath = source.readString();
-        backdropPath = source.readString();
-        overview = source.readString();
-        voteAverage = source.readString();
-        releaseDate = source.readString();
-    }
 }

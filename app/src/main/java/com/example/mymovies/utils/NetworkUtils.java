@@ -21,10 +21,10 @@ public class NetworkUtils {
     private static final String apiKey = "MyApiKey";
 
     // An ISO 639-1 value to display translated data for the fields that support it
-    private static final String languageIsoCode = "el";
+    private static final String languageIsoCode = "el"; // Translates data to Greek
 
     // Url to get a list of API genres:  https://api.themoviedb.org/3/genre/movie/list?api_key=OurApiKey
-    private static final String genresList = "10749,14";
+    private static final String genresList = "10749,14"; // Romance id: 10749, Fantasy id: 14
 
     public static URL buildUrl(String sortByPath, String apiPage) {
         String baseUrl =  THE_MOVIE_DB_BASE_URL + sortByPath;

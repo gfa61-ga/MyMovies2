@@ -78,6 +78,10 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
                 apiPage = savedInstanceState.getInt("apiPage");
             if (savedInstanceState.containsKey("movies")) {
                 moviesDisplayAdapter.setMovies(savedInstanceState.getParcelableArrayList("movies"));
+                // Adjusts the moviesDisplayRecyclerView, because the number of rows
+                // may change after rotation, so that the last row of posters
+                // if full. The number of rows after rotation
+                // is calculated by the MovieAdapter.getItemCount() method
                 moviesDisplayAdapter.notifyDataSetChanged();
             }
         } else { // Starts new state
@@ -89,11 +93,11 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
         }
 
         moviesDisplayRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            /** Loads more movies when we are at the last line of movies and try to scroll down farther */
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                int directionDown = 1; // direction integers: -1 for up, 1 for down
-                // Loads more movies when we are at the last line of movies and try to scroll down farther
+                int directionDown = 1; // Direction integers: -1 for up, 1 for down
                 if (!recyclerView.canScrollVertically(directionDown) && moviesDisplayScrolledDown ) {
                     moviesDisplayScrolledDown = false;
                     loadNextPageOfMovies();
@@ -158,7 +162,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
             sortByApiPath = selectedSortByApiPath;
             apiPage=0;
             moviesDisplayAdapter.setMovies(null);
-            moviesDisplayRecyclerView.scrollToPosition(0);
+            moviesDisplayRecyclerView.scrollToPosition(0); // Scrolls to the top
             loadNextPageOfMovies();
             return true;
         }
@@ -225,8 +229,11 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
                     Context toastContext = MainActivity.this;
                     String errorMessage = "No internet connection.\nPlease try again later.";
                     Toast noInternetToast = Toast.makeText(toastContext, errorMessage, Toast.LENGTH_LONG);
+
+                    // https://stackoverflow.com/questions/3522023/center-text-in-a-toast-in-android
                     TextView v = (TextView) noInternetToast.getView().findViewById(android.R.id.message);
                     if( v != null) v.setGravity(Gravity.CENTER);
+
                     noInternetToast.show();
                 } else {
                     showInternetConnectionErrorMessage();

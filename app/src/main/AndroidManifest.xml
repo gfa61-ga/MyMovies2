@@ -11,15 +11,19 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.PopularMovies">
+
         <activity android:name=".MovieDetailsActivity"
             android:label="Movie Details"
             android:parentActivityName="com.example.mymovies.MainActivity"
-        />
+        /> <!-- Defines the parentActivityName activity to return when Home/Up button is clicked and
+                also the Home/Up button is automatically added to the left of MovieDetailsActivity's
+                ActionBar-->
+
         <activity android:name=".MainActivity"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask">   <!-- Does not destroy MainActivity's state
+                                                    when MovieDetailsActivity is opened -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

@@ -16,6 +16,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
+/** Creates a moviesDisplayAdapter instance that
+ * binds movies data to movieViewHolders that are displayed within the moviesDisplayRecyclerView.
+ */
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHolder> {
 
     private List<Movie> moviesList;
@@ -26,6 +29,11 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
         void onClick(Movie movie);
     }
 
+    /** Through the mClickHandler parameter is passed a reference to the mainActivity instance
+     * in order to call it's onClick method.
+     * Through the mGridLayoutManager parameter is passed a reference to the moviesDisplayRecyclerView
+     * layout in order to call it's getSpanCount method
+     */
     public MovieAdapter(OnClickHandler mClickHandler, GridLayoutManager mGridLayoutManager) {
         this.mClickHandler = mClickHandler;
         this.mGridLayoutManager = mGridLayoutManager;
@@ -47,16 +55,26 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
         Picasso.get().load(moviesList.get(position).getPosterPath()).into(holder.moviePosterImageView);
     }
 
+    /** Returns the number of items (posters) to be displayed*/
     @Override
     public int getItemCount() {
-        int mNoOfColumns = mGridLayoutManager.getSpanCount();
+        // numberOfDisplayedColumns changes after screen rotation
+        int numberOfDisplayedColumns = mGridLayoutManager.getSpanCount();
         if (moviesList == null) {
             return 0;
         } else {
-            return moviesList.size()/mNoOfColumns*mNoOfColumns;
+            // Calculates the number of rows after each screen rotation,
+            // so that the last row of posters if full.
+            // The remaining posters are not displayed, but corresponding movies data
+            // is kept in moviesList and displayed in next rotation if possible.
+            int numberOfFullRows = moviesList.size()/numberOfDisplayedColumns; // Integer part of division
+            return numberOfFullRows*numberOfDisplayedColumns;
         }
     }
 
+    /** Each MovieViewHolder instance contains a movie_list_item_layout view and
+     * metadata about its position within the moviesDisplayRecyclerView.
+     */
     public class MovieViewHolder extends RecyclerView.ViewHolder {
         public final ImageView moviePosterImageView;
 
@@ -67,7 +85,9 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
             moviePosterImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    mClickHandler.onClick(moviesList.get(getAdapterPosition()));
+                    int movieViewHolderPosition = getAdapterPosition(); // this is also movie's index in moviesList
+                    // Calls mainActivity's onClick method which opens movie's detailsActivity
+                    mClickHandler.onClick(moviesList.get(movieViewHolderPosition));
                 }
             });
         }
@@ -80,7 +100,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
         } else {
             moviesList.addAll(moreMoviesList);
         }
-        notifyDataSetChanged();
+        notifyDataSetChanged(); // Adjusts the moviesDisplayRecyclerView to display the newly loaded movies
     }
 
     public List<Movie> getMovies() {
