@@ -41,8 +41,13 @@ public class MovieDetailsActivity extends AppCompatActivity {
 
         TextView voteAverage = findViewById(R.id.vote_average);
         voteAverage.setText(mMovie.getVoteAverage() + "/10");
-
+        
         TextView releaseDate = findViewById(R.id.release_date);
-        releaseDate.setText(mMovie.getReleaseDate().substring(0,4));
+        String releaseDateString =  mMovie.getReleaseDate();
+        if (mMovie.getReleaseDate().length()>0) {
+        releaseDate.setText(releaseDateString.substring(0, 4));
+        } else  {
+            releaseDate.setText("");
+        }
     }
 }
