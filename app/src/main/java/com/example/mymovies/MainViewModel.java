@@ -1,10 +1,18 @@
 package com.example.mymovies;
 import androidx.lifecycle.AndroidViewModel;
-import java.util.ArrayList;
 
-// Create MainViewModel to store mApiResponceJson array
+import com.example.mymovies.model.Movie;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/*
+ Create MainViewModel to store mApiResponseJson array.
+ This way we avoid repeating the same API calls while the app is running.
+*/
 public class MainViewModel extends AndroidViewModel  {
-    public ArrayList<String>[] mApiResponseJson ;
+    private ArrayList<String>[] mApiResponseJson;
+    private List<Movie> moviesList = new ArrayList<Movie>();
 
     // This constructor creates a "MainViewModel has no zero argument constructor" error
     /*
@@ -27,5 +35,16 @@ public class MainViewModel extends AndroidViewModel  {
 
     public ArrayList<String>[] getmApiResponceJson() {
         return mApiResponseJson;
+    }
+
+    public List<Movie> getMoviesFromModel() {
+        return moviesList;
+    }
+
+    public void setMoviesFromModel(List<Movie> currentMoviesList) {
+        moviesList = new ArrayList<Movie>();
+        if (currentMoviesList!= null) {
+            moviesList.addAll(currentMoviesList);
+        }
     }
 }

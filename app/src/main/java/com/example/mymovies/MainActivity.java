@@ -104,14 +104,14 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
                 internetConnection = savedInstanceState.getBoolean("internetConnection");
             if (savedInstanceState.containsKey("apiPage"))
                 apiPage = savedInstanceState.getInt("apiPage");
-            if (savedInstanceState.containsKey("movies")) {
-                moviesDisplayAdapter.setMovies(savedInstanceState.getParcelableArrayList("movies"));
-                // Adjusts the moviesDisplayRecyclerView, because the number of rows
-                // may change after rotation, so that the last row of posters
-                // if full. The number of rows after rotation
-                // is calculated by the MovieAdapter.getItemCount() method
-                moviesDisplayAdapter.notifyDataSetChanged();
-            }
+
+            // get moviesList from mMainActivityModel after rotation
+            moviesDisplayAdapter.setMovies(mMainActivityModel.getMoviesFromModel());
+            // Adjusts the moviesDisplayRecyclerView, because the number of rows
+            // may change after rotation, so that the last row of posters
+            // if full. The number of rows after rotation
+            // is calculated by the MovieAdapter.getItemCount() method
+            moviesDisplayAdapter.notifyDataSetChanged();
         } else { // Starts new state
             sortByApiPath = SORT_BY_POPULAR_API_PATH;
             // Considers internetConnection is true until the first try to get a page of movies
@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
         });
 
         // Displays internet connection error when internet is off and no movies are previously loaded
-        if (!internetConnection && moviesDisplayAdapter.getMovies() == null) {
+        if (!internetConnection && moviesDisplayAdapter.getMovies().size() == 0) {
             showInternetConnectionErrorMessage();
         }
     }
@@ -201,8 +201,9 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
     public void onSaveInstanceState(Bundle outState) {
         outState.putString("sortByApiPath", sortByApiPath);
         outState.putInt("apiPage", apiPage);
-        outState.putParcelableArrayList("movies", (ArrayList<Movie>) moviesDisplayAdapter.getMovies());
         outState.putBoolean("internetConnection",internetConnection);
+        // stores moviesList to mMainActivityModel before rotation
+        mMainActivityModel.setMoviesFromModel(moviesDisplayAdapter.getMovies());
         super.onSaveInstanceState(outState);
     }
 
