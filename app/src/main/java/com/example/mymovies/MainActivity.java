@@ -1,14 +1,20 @@
 package com.example.mymovies;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
+import android.content.Loader;
+import android.content.AsyncTaskLoader;
+import android.app.LoaderManager;
+
+import androidx.lifecycle.ViewModelProvider;
+
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.Menu;
@@ -24,12 +30,19 @@ import com.example.mymovies.utils.NetworkUtils;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Defines the mainActivity instance, which also
  * handles clicks on moviePosters displayed in moviesDisplayRecyclerView
+ * and contains the Loader callbacks
  */
-public class MainActivity extends AppCompatActivity implements MovieAdapter.OnClickHandler{
+public class MainActivity extends AppCompatActivity implements MovieAdapter.OnClickHandler,
+        LoaderManager.LoaderCallbacks<String>{
+
+    private final int NEXT_MOVIE_PAGE_DATA_LOADER = 31;
+    private static final String SORT_BY_EXTRA = "sort-by";
+    private static final String PAGE_NUMBER_EXTRA = "page-number";
 
     private RecyclerView moviesDisplayRecyclerView;
     private MovieAdapter moviesDisplayAdapter;
@@ -46,10 +59,20 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
     // As defined at: https://developers.themoviedb.org/3/movies/get-top-rated-movies
     private final String SORT_BY_TOP_RATED_API_PATH = "top_rated";
 
+    private ArrayList<String>[] mApiResponseJson ;
+    private MainViewModel mMainActivityModel;
+    private LoaderManager mLoaderManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mLoaderManager = getLoaderManager(); //we must call getLoaderManager()
+            // in onCreate() if it's an Activity or in onActivityCreated() if it's a Fragment
+            // Otherwise the loader will be in a STOPPED state AFTER ROTATION
+            // because the loaderManager will not reattach the old loader to the new Activity
+            // https://stackoverflow.com/questions/12507617/android-loader-not-triggering-callbacks-on-screen-rotate
 
         errorDisplayTextView = (TextView) findViewById(R.id.tv_error_message_display);
         mProgressBar = (ProgressBar) findViewById(R.id.pb_loading_indicator);
@@ -68,6 +91,11 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
         MovieAdapter.OnClickHandler mClickHandler = this;
         moviesDisplayAdapter = new MovieAdapter(mClickHandler, mGridLayoutManager);
         moviesDisplayRecyclerView.setAdapter(moviesDisplayAdapter);
+
+        // Get mApiResponceJson array from the mMainActivityModel, where it is automatically retained
+        // during configuration changes like rotation.
+        mMainActivityModel = new ViewModelProvider(this).get(MainViewModel.class);
+        mApiResponseJson = mMainActivityModel.getmApiResponceJson();
 
         if(savedInstanceState != null) { // Restores state after orientation change
             if (savedInstanceState.containsKey("sortByApiPath"))
@@ -148,7 +176,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
     public boolean onOptionsItemSelected(MenuItem item) {
         item.setChecked(true);
         int id = item.getItemId();
-
         // Selects SORT_BY_POPULAR_API_PATH as default
         String selectedSortByApiPath = SORT_BY_POPULAR_API_PATH;
         if (id == R.id.action_order_top_rated) {
@@ -191,61 +218,121 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
         startActivity(intent);
     }
 
-    /** Defines an asynchronous  ThemoviedbQueryTask instance, which queries the next page of movies */
     @SuppressLint("StaticFieldLeak")
-    public class ThemoviedbQueryTask extends AsyncTask <String, Void, String>{
-        @Override
-        protected void onPreExecute() {
-            showMoviesDisplayRecyclerView();
-            mProgressBar.setVisibility(View.VISIBLE);
-        }
+    @NonNull
+    @Override
+    public Loader<String> onCreateLoader(int id, @Nullable Bundle args) {
+        return new AsyncTaskLoader<String>(this){
 
-        /** Tries to asynchronously get an apiResponse as a String */
-        @Override
-        protected String doInBackground(String... params) {
-            String sortByApiPath = params[0];
-            String apiPageToQuery = params[1];
+            @Override
+            protected void onStartLoading() {
+                assert args != null;
+                String sortByApiPath = args.getString(SORT_BY_EXTRA);
+                String apiPageToQuery = args.getString(PAGE_NUMBER_EXTRA);
+                int index;
+                if (sortByApiPath.equals(SORT_BY_POPULAR_API_PATH)) {
+                    index = 0;
+                } else {
+                    index=1;
+                }
 
-            URL url = NetworkUtils.buildUrl(sortByApiPath, apiPageToQuery);
-            try {
-                return NetworkUtils.getResponseFromHttpUrl(url);
-            } catch (Exception e) {
-                e.printStackTrace();
+                if(mApiResponseJson[index].size()<Integer.parseInt(apiPageToQuery) ){
+                    showMoviesDisplayRecyclerView();
+                    mProgressBar.setVisibility(View.VISIBLE);
+                    forceLoad(); // This will ignore a previously loaded data set and load a new one.
+                    // We generally should only call this when the loader is started.
+                } else {
+                    deliverResult(mApiResponseJson[index].get(Integer.parseInt(apiPageToQuery)-1));
+                }
+            }
+
+            @Nullable
+            @Override
+            public String loadInBackground() {
+                if (args != null) {
+                    String sortByApiPath = args.getString(SORT_BY_EXTRA);
+                    String apiPageToQuery = args.getString(PAGE_NUMBER_EXTRA);
+
+                    URL url = NetworkUtils.buildUrl(sortByApiPath, apiPageToQuery);
+                    try {
+                        return NetworkUtils.getResponseFromHttpUrl(url);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
                 return null;
             }
-        }
 
-        /** Handles the apiResponse */
-        @Override
-        protected void onPostExecute(String apiResponse) {
-            mProgressBar.setVisibility(View.GONE);
-            if (apiResponse != null) {
-                apiPage++;
-                internetConnection = true;
-                showMoviesDisplayRecyclerView();
-                moviesDisplayAdapter.loadMoreMovies(apiResponse);
-            } else {
-                internetConnection = false;
-                if (apiPage>=1) { // If some movies have previously loaded don't hide them. Just show a toast
-                    Context toastContext = MainActivity.this;
-                    String errorMessage = "No internet connection.\nPlease try again later.";
-                    Toast noInternetToast = Toast.makeText(toastContext, errorMessage, Toast.LENGTH_LONG);
+            @Override
+            public void deliverResult(String apiResponse) {
+                if (apiResponse != null) { // if apiResponse is null, DON'T save it in mApiResponceJson
+                    String sortByApiPath = args.getString(SORT_BY_EXTRA);
+                    String apiPageToQuery = args.getString(PAGE_NUMBER_EXTRA);
+                    int index;
+                    if (sortByApiPath.equals(SORT_BY_POPULAR_API_PATH)) {
+                        index = 0; // Save apiResponse in most popular movies ArrayList
+                    } else {
+                        index = 1; // Save apiResponse in top rated movies ArrayList
+                    }
 
-                    // https://stackoverflow.com/questions/3522023/center-text-in-a-toast-in-android
-                    TextView v = (TextView) noInternetToast.getView().findViewById(android.R.id.message);
-                    if( v != null) v.setGravity(Gravity.CENTER);
-
-                    noInternetToast.show();
-                } else {
-                    showInternetConnectionErrorMessage();
+                    if (mApiResponseJson[index].size() < Integer.parseInt(apiPageToQuery)) {
+                        mApiResponseJson[index].add(Integer.parseInt(apiPageToQuery) - 1, apiResponse);
+                    } else {
+                        mApiResponseJson[index].set(Integer.parseInt(apiPageToQuery) - 1, apiResponse);
+                    }
                 }
+                super.deliverResult(apiResponse);
+            }
+        };
+    }
+
+    @Override
+    public void onLoadFinished(android.content.Loader<String> loader, String apiResponse) {
+        mProgressBar.setVisibility(View.GONE);
+        if (apiResponse != null) {
+            apiPage++;
+            internetConnection = true;
+            showMoviesDisplayRecyclerView();
+            moviesDisplayAdapter.loadMoreMovies(apiResponse);
+        } else {
+            internetConnection = false;
+            if (apiPage>=1) { // If some movies have previously loaded don't hide them. Just show a toast
+                Context toastContext = MainActivity.this;
+                String errorMessage = "No internet connection.\nPlease try again later.";
+                Toast noInternetToast = Toast.makeText(toastContext, errorMessage, Toast.LENGTH_LONG);
+
+                // https://stackoverflow.com/questions/3522023/center-text-in-a-toast-in-android
+                TextView v = (TextView) noInternetToast.getView().findViewById(android.R.id.message);
+                if( v != null) v.setGravity(Gravity.CENTER);
+
+                noInternetToast.show();
+            } else {
+                showInternetConnectionErrorMessage();
             }
         }
     }
 
-    /** Creates and asynchronously executes the ThemoviedbQueryTask instance */
+    @Override
+    public void onLoaderReset(android.content.Loader<String> loader) {
+    }
+
+    /** Creates or restarts and then asynchronously executes the anonymous AsyncTaskLoader instance */
     private void loadNextPageOfMovies() {
         String apiPageToQuery = String.valueOf(apiPage+1);
-        new ThemoviedbQueryTask().execute(sortByApiPath, apiPageToQuery);
+        Bundle queryBundle = new Bundle();
+        queryBundle.putString(SORT_BY_EXTRA, sortByApiPath);
+        queryBundle.putString(PAGE_NUMBER_EXTRA, apiPageToQuery);
+
+        Loader<String> mLoader = mLoaderManager.getLoader(NEXT_MOVIE_PAGE_DATA_LOADER);
+
+        if (mLoader == null) {
+            mLoaderManager.initLoader(NEXT_MOVIE_PAGE_DATA_LOADER, queryBundle, this);
+        } else {
+            // This could not restart the loader after rotation..!!!
+            // getLoaderManager().restartLoader(NEXT_MOVIE_PAGE_DATA_LOADER, queryBundle, this);
+
+            mLoaderManager.restartLoader(NEXT_MOVIE_PAGE_DATA_LOADER, queryBundle, this);
+        }
     }
 }
