@@ -10,4 +10,13 @@ public class LayoutUtils {
         float screenWidthDp = displayMetrics.widthPixels / displayMetrics.density;
         return (int) (screenWidthDp / columnWidthDp + 0.5);
     }
+    public static int calculateNoOfTrailerColumns(Context context) {
+        DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+        if (displayMetrics.widthPixels<displayMetrics.heightPixels) {
+            return 1;
+        } else
+        {
+            return 2;
+        }
+    }
 }

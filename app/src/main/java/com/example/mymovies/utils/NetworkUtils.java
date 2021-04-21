@@ -36,6 +36,7 @@ public class NetworkUtils {
                 .appendQueryParameter(LANGUAGE_PARAM, languageIsoCode)
                 //.appendQueryParameter(GENRES_PARAM, genresList)
                 .build();
+        Log.w("builtUri", String.valueOf(builtUri));
         URL url = null;
         try {
             url = new URL(builtUri.toString());

@@ -42,12 +42,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="28dp"
+            android:layout_marginTop="24dp"
             android:layout_marginEnd="16dp"
-            android:layout_marginBottom="16dp"
             android:text="overview"
             android:textAppearance="@style/TextAppearance.AppCompat.Body2"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/poster_image" />
@@ -56,7 +54,7 @@
             android:id="@+id/original_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:layout_marginEnd="16dp"
             android:text="original_title"
             android:textAppearance="@style/TextAppearance.AppCompat.Large"
@@ -68,7 +66,7 @@
             android:id="@+id/release_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="16dp"
             android:text="release_date"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
             android:textStyle="bold"
@@ -79,7 +77,7 @@
             android:id="@+id/vote_average"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="16dp"
             android:text="vote_average"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"
             android:textStyle="bold"
@@ -98,6 +96,81 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.219" />
 
+        <ImageView
+            android:id="@+id/vertical_bar_1"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:background="@color/cardview_dark_background"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/overview"
+            app:srcCompat="@android:drawable/bottom_bar" />
+
+        <TextView
+            android:id="@+id/trailers_header"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:text="Trailers:"
+            android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/vertical_bar_1" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerview_trailers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/trailers_header" />
+
+        <ImageView
+            android:id="@+id/vertical_bar_2"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:background="@color/cardview_dark_background"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/recyclerview_trailers"
+            app:srcCompat="@android:drawable/bottom_bar" />
+
+        <TextView
+            android:id="@+id/reviews_header"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:text="Reviews:"
+            android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/vertical_bar_2" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerview_reviews"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/reviews_header" />
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="MARK AS \nFAVORITE"
+            android:backgroundTint="#80deea"
+            android:textColor="#ab47bc"
+            android:textAlignment="center"
+            app:layout_constraintStart_toStartOf="@+id/vote_average"
+            app:layout_constraintTop_toBottomOf="@+id/vote_average" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </ScrollView>

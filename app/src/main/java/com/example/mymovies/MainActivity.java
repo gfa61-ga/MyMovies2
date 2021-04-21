@@ -135,9 +135,9 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
             /** Updates vertical scroll state after vertical scrolling */
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                if (dy > 0) {
+                if (dy >= 0) {
                     moviesDisplayScrolledDown = true;
-                } else if (dy < 0) {
+                } else {
                     moviesDisplayScrolledDown = false;
                 }
             }
@@ -239,7 +239,9 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
 
                 if(mApiResponseJson[index].size()<Integer.parseInt(apiPageToQuery) ){
                     showMoviesDisplayRecyclerView();
-                    mProgressBar.setVisibility(View.VISIBLE);
+                    if (internetConnection) {
+                        mProgressBar.setVisibility(View.VISIBLE);
+                    }
                     forceLoad(); // This will ignore a previously loaded data set and load a new one.
                     // We generally should only call this when the loader is started.
                 } else {
