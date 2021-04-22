@@ -13,6 +13,7 @@ import java.util.List;
 public class MainViewModel extends AndroidViewModel  {
     private ArrayList<String>[] mApiResponseJson;
     private List<Movie> moviesList = new ArrayList<Movie>();
+    String[] mTrailersApiResponseJson;
 
     // This constructor creates a "MainViewModel has no zero argument constructor" error
     /*
@@ -23,6 +24,8 @@ public class MainViewModel extends AndroidViewModel  {
         super(null); // This only works with a null argument ???????
 
         mApiResponseJson=new ArrayList[2];
+
+        mTrailersApiResponseJson = new String[2];
 
         // Create ArrayList to store API responses for most popular movies
         int mostPopularIndex=0;
@@ -35,6 +38,10 @@ public class MainViewModel extends AndroidViewModel  {
 
     public ArrayList<String>[] getmApiResponceJson() {
         return mApiResponseJson;
+    }
+
+    public String[] getTrailersApiResponseJson() {
+        return mTrailersApiResponseJson;
     }
 
     public List<Movie> getMoviesFromModel() {

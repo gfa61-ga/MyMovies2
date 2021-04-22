@@ -13,10 +13,11 @@ public class Movie implements Parcelable {
     private final String overview;
     private final String voteAverage;
     private final String releaseDate;
+    private final String movieId;
 
     /* Constructor that creates new movie from movieData */
     public Movie(String originalTitle, String posterPath, String backdropPath,
-                 String overview, String voteAverage, String releaseDate) {
+                 String overview, String voteAverage, String releaseDate, String movieId) {
         // w185 is the path for getting an image with 185 dpi width
         final String IMAGES_BASE_URL = "https://image.tmdb.org/t/p/w185";
 
@@ -26,6 +27,7 @@ public class Movie implements Parcelable {
         this.overview = overview;
         this.voteAverage = voteAverage;
         this.releaseDate = releaseDate;
+        this.movieId = movieId;
     }
 
     public String getOriginalTitle() { return originalTitle; }
@@ -40,6 +42,8 @@ public class Movie implements Parcelable {
 
     public String getReleaseDate() { return releaseDate; }
 
+    public String getMovieId() { return movieId; }
+
     /* Constructor that creates new movie from parcelSource */
     private Movie(Parcel source) {
         originalTitle = source.readString();
@@ -48,6 +52,7 @@ public class Movie implements Parcelable {
         overview = source.readString();
         voteAverage = source.readString();
         releaseDate = source.readString();
+        movieId = source.readString();
     }
 
     @Override
@@ -63,6 +68,7 @@ public class Movie implements Parcelable {
         dest.writeString(overview);
         dest.writeString(voteAverage);
         dest.writeString(releaseDate);
+        dest.writeString(movieId);
     }
 
     public static Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>(){

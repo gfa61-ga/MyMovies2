@@ -1,38 +1,74 @@
 package com.example.mymovies;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
+import android.app.LoaderManager;
 import android.content.ActivityNotFoundException;
+import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.content.Intent;
+import android.content.Loader;
 import android.graphics.text.LineBreaker;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.mymovies.model.Movie;
+import com.example.mymovies.model.Review;
 import com.example.mymovies.model.Trailer;
 import com.example.mymovies.utils.JsonUtils;
 import com.example.mymovies.utils.LayoutUtils;
+import com.example.mymovies.utils.NetworkUtils;
 import com.squareup.picasso.Picasso;
+
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import static android.text.Layout.JUSTIFICATION_MODE_INTER_WORD;
 
-public class MovieDetailsActivity extends AppCompatActivity implements TrailerAdapter.OnClickHandler, ReviewAdapter.OnClickHandler{
+public class MovieDetailsActivity extends AppCompatActivity implements TrailerAdapter.OnClickHandler, ReviewAdapter.OnClickHandler, LoaderManager.LoaderCallbacks<String[]>{
     Movie mMovie;
+    private MainViewModel mMainActivityModel;
+    String[] mTrailersApiResponseJson;
+    TrailerAdapter trailersAdapter;
+    ReviewAdapter reviewsAdapter;
+
+    ImageView trailersBar;
+    TextView trailersHeader;
+
+    ImageView reviewsBar;
+    TextView reviewsHeader;
+
+
 
     @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie_details);
+        mMainActivityModel = new ViewModelProvider(this).get(MainViewModel.class);
+        mTrailersApiResponseJson = mMainActivityModel.getTrailersApiResponseJson();
+
+
+        trailersBar = findViewById(R.id.vertical_bar_1);
+        trailersHeader = findViewById(R.id.trailers_header);
+
+        reviewsBar = findViewById(R.id.vertical_bar_2);
+        reviewsHeader = findViewById(R.id.reviews_header);
+
 
         mMovie =  getIntent().getParcelableExtra("movie");
 
@@ -73,27 +109,30 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
         trailersDisplayRecyclerView.setHasFixedSize(true);
 
         TrailerAdapter.OnClickHandler mClickHandler = this;
-        TrailerAdapter trailersAdapter = new TrailerAdapter(mClickHandler, mGridLayoutManager);
-        trailersAdapter.setTrailers(JsonUtils.parseTrailers(getResources().getString(R.string.trailers_json)));
-        //trailersAdapter.setReviews(JsonUtils.parseReviews(getResources().getString(R.string.reviews_json)));
+        trailersAdapter = new TrailerAdapter(mClickHandler, mGridLayoutManager);
+        ReviewAdapter.OnClickHandler mClickHandler1 = this;
+        reviewsAdapter = new ReviewAdapter(mClickHandler1, mGridLayoutManager);
+
+        //trailersAdapter.setTrailers(JsonUtils.parseTrailers(getResources().getString(R.string.trailers_json)));
+        LoaderManager mLoaderManager = getLoaderManager();
+        Loader<String> mLoader = mLoaderManager.getLoader(233);
+        if (mLoader == null) {
+            mLoaderManager.initLoader(233, null, this);
+            Log.w("********", "initLoader");
+        } else {
+            // This will restart the loader after rotation..!!!
+            mLoaderManager.restartLoader(233, null, this);
+        }
+
         trailersDisplayRecyclerView.setAdapter(trailersAdapter);
 
-        ReviewAdapter.OnClickHandler mClickHandler1 = this;
         RecyclerView reviewsDisplayRecyclerView = (RecyclerView) findViewById(R.id.recyclerview_reviews);
         LinearLayoutManager mGridLayoutManager1 = new LinearLayoutManager (context);
         reviewsDisplayRecyclerView.setLayoutManager(mGridLayoutManager1);
         reviewsDisplayRecyclerView.setHasFixedSize(true);
 
-
-        ReviewAdapter reviewsAdapter = new ReviewAdapter(mClickHandler1, mGridLayoutManager1);
-        //reviewsAdapter.setTrailers(JsonUtils.parseTrailers(getResources().getString(R.string.trailers_json)));
-        reviewsAdapter.setReviews(JsonUtils.parseReviews(getResources().getString(R.string.reviews_json)));
         reviewsDisplayRecyclerView.setAdapter(reviewsAdapter);
-
-
     }
-
-
 
     @Override
     public void onClick(Trailer trailer) {
@@ -105,4 +144,87 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
         }
     }
 
+    @SuppressLint("StaticFieldLeak")
+    @Override
+    public Loader<String[]> onCreateLoader(int i, Bundle args) {
+        return new AsyncTaskLoader<String[]>(this){
+
+            @Override
+            protected void onStartLoading() {
+                super.onStartLoading();  // ???
+                if(mTrailersApiResponseJson[0] == null && mTrailersApiResponseJson[1] == null){
+                    forceLoad(); // This will ignore a previously loaded data set and load a new one.
+                    // We generally should only call this when the loader is started.
+                } else {
+                    deliverResult(mTrailersApiResponseJson);
+                }
+            }
+
+            @Override
+            public String[] loadInBackground() {
+                URL trailersUrl = NetworkUtils.buildTrailerUrl(mMovie.getMovieId());
+                URL reviewsUrl = NetworkUtils.buildReviewUrl(mMovie.getMovieId());
+                try {
+                    return new String[] {NetworkUtils.getResponseFromHttpUrl(trailersUrl), NetworkUtils.getResponseFromHttpUrl(reviewsUrl)};
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+        };
+    }
+
+    @Override
+    public void onLoadFinished(Loader<String[]> loader, String apiResponse[]) {
+        if (apiResponse!= null) {
+            if (apiResponse[0] != null && apiResponse[0] != null) {
+                mTrailersApiResponseJson[0] = apiResponse[0];
+                mTrailersApiResponseJson[1] = apiResponse[1];
+
+                List<Trailer> trailers = JsonUtils.parseTrailers(apiResponse[0]);
+                if (trailers.size() == 0) {
+                    trailersBar.setVisibility(View.GONE);
+                    trailersHeader.setVisibility(View.GONE);
+
+                } else {
+                    trailersAdapter.setTrailers(trailers);
+                    trailersAdapter.notifyDataSetChanged();
+                }
+
+                List<Review> reviews = JsonUtils.parseReviews(apiResponse[1]);
+
+                if (reviews.size() == 0) {
+                    reviewsBar.setVisibility(View.GONE);
+                    reviewsHeader.setVisibility(View.GONE);
+                } else {
+                    reviewsAdapter.setReviews(reviews);
+                    reviewsAdapter.notifyDataSetChanged();
+                }
+
+            } else {
+
+            }
+        } else {
+            Context toastContext = MovieDetailsActivity.this;
+            String errorMessage = "    No internet connection.\n" + "Can't get trailers and reviews." + "\n    Please try again later.";
+            Toast noInternetToast = Toast.makeText(toastContext, errorMessage, Toast.LENGTH_LONG);
+            // https://stackoverflow.com/questions/3522023/center-text-in-a-toast-in-android
+
+            if (noInternetToast.getView() != null ) {
+                TextView v = (TextView) noInternetToast.getView().findViewById(android.R.id.message);
+                if( v != null) v.setGravity(Gravity.CENTER);
+            }
+            noInternetToast.show();
+
+            trailersBar.setVisibility(View.GONE);
+            trailersHeader.setVisibility(View.GONE);
+            reviewsBar.setVisibility(View.GONE);
+            reviewsHeader.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<String[]> loader) {
+
+    }
 }

@@ -68,12 +68,12 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerV
     /** Returns the number of items (posters) to be displayed*/
     @Override
     public int getItemCount() {
-
-
+        if (trailers != null) {
             return trailers.size();
-
+        } else {
+            return 0;
+        }
     }
-
     /** Each MovieViewHolder instance contains a movie_list_item_layout view and
      * metadata about its position within the moviesDisplayRecyclerView.
      */

@@ -306,8 +306,10 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
                 Toast noInternetToast = Toast.makeText(toastContext, errorMessage, Toast.LENGTH_LONG);
 
                 // https://stackoverflow.com/questions/3522023/center-text-in-a-toast-in-android
-                TextView v = (TextView) noInternetToast.getView().findViewById(android.R.id.message);
-                if( v != null) v.setGravity(Gravity.CENTER);
+                if (noInternetToast.getView() != null ) {
+                    TextView v = (TextView) noInternetToast.getView().findViewById(android.R.id.message);
+                    if( v != null) v.setGravity(Gravity.CENTER);
+                }
 
                 noInternetToast.show();
             } else {

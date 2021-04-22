@@ -36,6 +36,7 @@ public class JsonUtils {
         String overview = "";
         String voteAverage = "";
         String releaseDate = "";
+        String movieId = "";
 
         try {
             originalTitle = movieJson.getString("original_title");
@@ -44,11 +45,12 @@ public class JsonUtils {
             overview = movieJson.getString("overview");
             voteAverage = movieJson.getString("vote_average");
             releaseDate = movieJson.getString("release_date");
+            movieId = movieJson.getString("id");
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        return new Movie(originalTitle, posterPath, backdropPath, overview, voteAverage, releaseDate);
+        return new Movie(originalTitle, posterPath, backdropPath, overview, voteAverage, releaseDate, movieId);
     }
 
     public static List<Trailer> parseTrailers(String apiResponse) {
@@ -96,8 +98,12 @@ public class JsonUtils {
             for (int index = 0; index < results.length(); index++) {
                 JSONObject trailerJson = results.getJSONObject(index);
                 Review review = parseReviewFromJsonObject(trailerJson);
-                if (Float.parseFloat(review.getRating()) > 7) {
-                    reviews.add(review);
+                try {
+                    if (Float.parseFloat(review.getRating()) > 5) {
+                        reviews.add(review);
+                    }
+                } catch (NumberFormatException e) {
+
                 }
             }
         } catch (JSONException e) {

@@ -22,7 +22,7 @@ public class NetworkUtils {
     private static final String apiKey = "ab5823c55dfafcc150970daf9379bc48";
 
     // An ISO 639-1 value to display translated data for the fields that support it
-    private static final String languageIsoCode = "el"; // Translates data to Greek
+    private static final String languageIsoCode = "en"; // el Translates data to Greek
 
     // Url to get a list of API genres:  https://api.themoviedb.org/3/genre/movie/list?api_key=OurApiKey
     private static final String genresList = "10749,14"; // Romance id: 10749, Fantasy id: 14
@@ -34,6 +34,42 @@ public class NetworkUtils {
                 .appendQueryParameter(PAGE_PARAM, apiPage)
                 .appendQueryParameter(API_KEY_PARAM, apiKey)
                 .appendQueryParameter(LANGUAGE_PARAM, languageIsoCode)
+                //.appendQueryParameter(GENRES_PARAM, genresList)
+                .build();
+        Log.w("builtUri", String.valueOf(builtUri));
+        URL url = null;
+        try {
+            url = new URL(builtUri.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return url;
+    }
+
+    public static URL buildTrailerUrl(String movieId) {
+        String baseUrl =  THE_MOVIE_DB_BASE_URL + movieId + "/videos";
+
+        Uri builtUri = Uri.parse(baseUrl).buildUpon()
+                .appendQueryParameter(API_KEY_PARAM, apiKey)
+                //.appendQueryParameter(LANGUAGE_PARAM, languageIsoCode)
+                //.appendQueryParameter(GENRES_PARAM, genresList)
+                .build();
+        Log.w("builtUri", String.valueOf(builtUri));
+        URL url = null;
+        try {
+            url = new URL(builtUri.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return url;
+    }
+
+    public static URL buildReviewUrl(String movieId) {
+        String baseUrl =  THE_MOVIE_DB_BASE_URL + movieId + "/reviews";
+
+        Uri builtUri = Uri.parse(baseUrl).buildUpon()
+                .appendQueryParameter(API_KEY_PARAM, apiKey)
+                //.appendQueryParameter(LANGUAGE_PARAM, languageIsoCode)
                 //.appendQueryParameter(GENRES_PARAM, genresList)
                 .build();
         Log.w("builtUri", String.valueOf(builtUri));

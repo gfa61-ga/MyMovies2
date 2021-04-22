@@ -90,10 +90,11 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
     /** Returns the number of items (posters) to be displayed*/
     @Override
     public int getItemCount() {
-
-
+        if (reviews != null) {
             return reviews.size();
-
+        } else {
+            return 0;
+        }
     }
 
     /** Each MovieViewHolder instance contains a movie_list_item_layout view and
