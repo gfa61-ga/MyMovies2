@@ -3,6 +3,8 @@ package com.example.mymovies;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,6 +26,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.mymovies.database.AppDatabase;
+//import com.example.mymovies.database.MovieEntry;
 import com.example.mymovies.model.Movie;
 import com.example.mymovies.utils.LayoutUtils;
 import com.example.mymovies.utils.NetworkUtils;
@@ -31,6 +35,8 @@ import com.example.mymovies.utils.NetworkUtils;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * Defines the mainActivity instance, which also
@@ -59,26 +65,34 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
     // As defined at: https://developers.themoviedb.org/3/movies/get-top-rated-movies
     private final String SORT_BY_TOP_RATED_API_PATH = "top_rated";
 
+    //
+    private final String SORT_BY_FAVORITES = "favorites";
+
     private ArrayList<String>[] mApiResponseJson ;
     private MainViewModel mMainActivityModel;
     private LoaderManager mLoaderManager;
+
+    AppDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Initialize member variable for the data base
+        db = AppDatabase.getInstance(getApplicationContext());
+
         mLoaderManager = getLoaderManager(); //we must call getLoaderManager()
-            // in onCreate() if it's an Activity or in onActivityCreated() if it's a Fragment
-            // Otherwise the loader will be in a STOPPED state AFTER ROTATION
-            // because the loaderManager will not reattach the old loader to the new Activity
-            // https://stackoverflow.com/questions/12507617/android-loader-not-triggering-callbacks-on-screen-rotate
+        // in onCreate() if it's an Activity or in onActivityCreated() if it's a Fragment
+        // Otherwise the loader will be in a STOPPED state AFTER ROTATION
+        // because the loaderManager will not reattach the old loader to the new Activity
+        // https://stackoverflow.com/questions/12507617/android-loader-not-triggering-callbacks-on-screen-rotate
 
         errorDisplayTextView = (TextView) findViewById(R.id.tv_error_message_display);
         mProgressBar = (ProgressBar) findViewById(R.id.pb_loading_indicator);
         moviesDisplayRecyclerView = findViewById(R.id.recyclerview_movies);
 
-        final int COLUMN_WIDTH_DP  = 185; // API posters have width equal to 185 dpi
+        final int COLUMN_WIDTH_DP = 185; // API posters have width equal to 185 dpi
         int numOfColumns = LayoutUtils.calculateNoOfColumns(getApplicationContext(), COLUMN_WIDTH_DP);
 
         context = this;
@@ -88,8 +102,15 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
         moviesDisplayRecyclerView.setLayoutManager(mGridLayoutManager);
         moviesDisplayRecyclerView.setHasFixedSize(true);
 
+        if (savedInstanceState != null) { // Restores state after orientation change
+            if (savedInstanceState.containsKey("sortByApiPath"))
+                sortByApiPath = savedInstanceState.getString("sortByApiPath");
+        } else {
+            sortByApiPath = SORT_BY_POPULAR_API_PATH;
+        }
+
         MovieAdapter.OnClickHandler mClickHandler = this;
-        moviesDisplayAdapter = new MovieAdapter(mClickHandler, mGridLayoutManager);
+        moviesDisplayAdapter = new MovieAdapter(mClickHandler, mGridLayoutManager, sortByApiPath);
         moviesDisplayRecyclerView.setAdapter(moviesDisplayAdapter);
 
         // Get mApiResponceJson array from the mMainActivityModel, where it is automatically retained
@@ -98,8 +119,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
         mApiResponseJson = mMainActivityModel.getmApiResponceJson();
 
         if(savedInstanceState != null) { // Restores state after orientation change
-            if (savedInstanceState.containsKey("sortByApiPath"))
-                sortByApiPath = savedInstanceState.getString("sortByApiPath");
             if (savedInstanceState.containsKey("internetConnection"))
                 internetConnection = savedInstanceState.getBoolean("internetConnection");
             if (savedInstanceState.containsKey("apiPage"))
@@ -113,7 +132,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
             // is calculated by the MovieAdapter.getItemCount() method
             moviesDisplayAdapter.notifyDataSetChanged();
         } else { // Starts new state
-            sortByApiPath = SORT_BY_POPULAR_API_PATH;
             // Considers internetConnection is true until the first try to get a page of movies
             internetConnection = true;
             apiPage = 0;
@@ -148,6 +166,18 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
             showInternetConnectionErrorMessage();
         }
     }
+/*
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (sortByApiPath.equals(SORT_BY_FAVORITES)) {
+
+            moviesDisplayAdapter.notifyDataSetChanged();
+
+        }
+
+    }*/
 
     private void showMoviesDisplayRecyclerView() {
         moviesDisplayRecyclerView.setVisibility(View.VISIBLE);
@@ -168,6 +198,10 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
         if (sortByApiPath.equals(SORT_BY_TOP_RATED_API_PATH)) {
             menu.findItem(R.id.action_order_top_rated).setChecked(true);
         }
+        if (sortByApiPath.equals(SORT_BY_FAVORITES)) {
+            menu.findItem(R.id.action_order_favorites).setChecked(true);
+        }
+
         return true;
     }
 
@@ -181,12 +215,17 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
         if (id == R.id.action_order_top_rated) {
             selectedSortByApiPath = SORT_BY_TOP_RATED_API_PATH;
         }
+        if (id == R.id.action_order_favorites) {
+            selectedSortByApiPath = SORT_BY_FAVORITES;
+            showMoviesDisplayRecyclerView();
+        }
 
         // Resets movies state and tries to load next page  movies
         // when we select a different sortBy option OR
         // when we select the same sortBy option and no movies have previously loaded - works like "RETRY"
         if (!selectedSortByApiPath.equals(sortByApiPath) || moviesDisplayAdapter.getMovies() == null) {
             sortByApiPath = selectedSortByApiPath;
+            moviesDisplayAdapter.setSortByApiPath(sortByApiPath);
             apiPage=0;
             moviesDisplayAdapter.setMovies(null);
             moviesDisplayRecyclerView.scrollToPosition(0); // Scrolls to the top
@@ -239,7 +278,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
 
                 if(mApiResponseJson[index].size()<Integer.parseInt(apiPageToQuery) ){
                     showMoviesDisplayRecyclerView();
-                    if (internetConnection) {
+                    if (internetConnection && !sortByApiPath.equals(SORT_BY_FAVORITES)) {
                         mProgressBar.setVisibility(View.VISIBLE);
                     }
                     forceLoad(); // This will ignore a previously loaded data set and load a new one.
@@ -324,20 +363,41 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
 
     /** Creates or restarts and then asynchronously executes the anonymous AsyncTaskLoader instance */
     private void loadNextPageOfMovies() {
-        String apiPageToQuery = String.valueOf(apiPage+1);
-        Bundle queryBundle = new Bundle();
-        queryBundle.putString(SORT_BY_EXTRA, sortByApiPath);
-        queryBundle.putString(PAGE_NUMBER_EXTRA, apiPageToQuery);
+        if (!sortByApiPath.equals(SORT_BY_FAVORITES)) {
+            String apiPageToQuery = String.valueOf(apiPage + 1);
+            Bundle queryBundle = new Bundle();
+            queryBundle.putString(SORT_BY_EXTRA, sortByApiPath);
+            queryBundle.putString(PAGE_NUMBER_EXTRA, apiPageToQuery);
 
-        Loader<String> mLoader = mLoaderManager.getLoader(NEXT_MOVIE_PAGE_DATA_LOADER);
+            Loader<String> mLoader = mLoaderManager.getLoader(NEXT_MOVIE_PAGE_DATA_LOADER);
 
-        if (mLoader == null) {
-            mLoaderManager.initLoader(NEXT_MOVIE_PAGE_DATA_LOADER, queryBundle, this);
+            if (mLoader == null) {
+                mLoaderManager.initLoader(NEXT_MOVIE_PAGE_DATA_LOADER, queryBundle, this);
+            } else {
+                // This could not restart the loader after rotation..!!!
+                // getLoaderManager().restartLoader(NEXT_MOVIE_PAGE_DATA_LOADER, queryBundle, this);
+
+                mLoaderManager.restartLoader(NEXT_MOVIE_PAGE_DATA_LOADER, queryBundle, this);
+            }
         } else {
-            // This could not restart the loader after rotation..!!!
-            // getLoaderManager().restartLoader(NEXT_MOVIE_PAGE_DATA_LOADER, queryBundle, this);
 
-            mLoaderManager.restartLoader(NEXT_MOVIE_PAGE_DATA_LOADER, queryBundle, this);
+            final LiveData<List<Movie>> movies = db.movieDao().loadAllMovies();
+
+            movies.observe(this, new Observer<List<Movie>>() {
+                @Override
+                public void onChanged(@Nullable List<Movie> updatedMovies) {
+                    if (sortByApiPath.equals(SORT_BY_FAVORITES)) {
+                        moviesDisplayAdapter.setMovies(updatedMovies);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                    moviesDisplayAdapter.notifyDataSetChanged();
+                            }
+                        });
+                    }
+                }
+            });
+
         }
     }
 }

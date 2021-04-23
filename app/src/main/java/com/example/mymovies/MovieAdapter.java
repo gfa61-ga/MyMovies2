@@ -24,6 +24,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
     private List<Movie> moviesList;
     private final OnClickHandler mClickHandler;
     private final GridLayoutManager mGridLayoutManager;
+    private String sortByApiPath;
 
     public interface OnClickHandler {
         void onClick(Movie movie);
@@ -34,9 +35,10 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
      * Through the mGridLayoutManager parameter is passed a reference to the moviesDisplayRecyclerView
      * layout in order to call it's getSpanCount method
      */
-    public MovieAdapter(OnClickHandler mClickHandler, GridLayoutManager mGridLayoutManager) {
+    public MovieAdapter(OnClickHandler mClickHandler, GridLayoutManager mGridLayoutManager, String sortByApiPath) {
         this.mClickHandler = mClickHandler;
         this.mGridLayoutManager = mGridLayoutManager;
+        this.sortByApiPath = sortByApiPath;
     }
 
     @NonNull
@@ -62,13 +64,15 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
         int numberOfDisplayedColumns = mGridLayoutManager.getSpanCount();
         if (moviesList == null) {
             return 0;
-        } else {
+        } else if (!sortByApiPath.equals("favorites")){
             // Calculates the number of rows after each screen rotation,
             // so that the last row of posters if full.
             // The remaining posters are not displayed, but corresponding movies data
             // is kept in moviesList and displayed in next rotation if possible.
             int numberOfFullRows = moviesList.size()/numberOfDisplayedColumns; // Integer part of division
             return numberOfFullRows*numberOfDisplayedColumns;
+        } else {
+            return moviesList.size();
         }
     }
 
@@ -109,5 +113,9 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
 
     public void setMovies(List<Movie> moviesList) {
         this.moviesList = moviesList;
+    }
+
+    public void setSortByApiPath(String sortByApiPath) {
+        this.sortByApiPath = sortByApiPath;
     }
 }

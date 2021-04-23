@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.ColumnInfo;
 
 import android.annotation.SuppressLint;
 import android.app.LoaderManager;
@@ -20,11 +21,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.mymovies.database.AppDatabase;
+//import com.example.mymovies.database.MovieEntry;
 import com.example.mymovies.model.Movie;
 import com.example.mymovies.model.Review;
 import com.example.mymovies.model.Trailer;
@@ -34,10 +37,9 @@ import com.example.mymovies.utils.NetworkUtils;
 import com.squareup.picasso.Picasso;
 
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-
-import static android.text.Layout.JUSTIFICATION_MODE_INTER_WORD;
+import java.util.concurrent.Executor;
 
 public class MovieDetailsActivity extends AppCompatActivity implements TrailerAdapter.OnClickHandler, ReviewAdapter.OnClickHandler, LoaderManager.LoaderCallbacks<String[]>{
     Movie mMovie;
@@ -52,6 +54,7 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
     ImageView reviewsBar;
     TextView reviewsHeader;
 
+    AppDatabase db;
 
 
     @SuppressLint("SetTextI18n")
@@ -62,6 +65,8 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
         mMainActivityModel = new ViewModelProvider(this).get(MainViewModel.class);
         mTrailersApiResponseJson = mMainActivityModel.getTrailersApiResponseJson();
 
+        // Initialize member variable for the data base
+        db = AppDatabase.getInstance(getApplicationContext());
 
         trailersBar = findViewById(R.id.vertical_bar_1);
         trailersHeader = findViewById(R.id.trailers_header);
@@ -69,8 +74,72 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
         reviewsBar = findViewById(R.id.vertical_bar_2);
         reviewsHeader = findViewById(R.id.reviews_header);
 
-
         mMovie =  getIntent().getParcelableExtra("movie");
+
+        Button favotitesButton = findViewById(R.id.fovorites_button);
+        Executor diskIo = AppExecutors.getInstance().diskIO();
+        // call the diskIO execute method with a new Runnable and implement its run method
+        diskIo.execute(new Runnable() {
+            @Override
+            public void run() {
+                if (db.movieDao().loadMovie(mMovie.getMovieId()) != null) {
+                    favotitesButton.setText("REMOVE FROM\nFAVORITES");
+                }
+            }
+        });
+
+
+        favotitesButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Executor diskIo = AppExecutors.getInstance().diskIO();
+                diskIo.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        String movieId = mMovie.getMovieId();
+
+                        String originalTitle = mMovie.getOriginalTitle();
+
+                        String posterPath = mMovie.getPosterPath().substring(Math.max(0, mMovie.getPosterPath().length()-32));
+
+                        String backdropPath = mMovie.getBackdropPath().substring(Math.max(0, mMovie.getBackdropPath().length()-32));
+                        Log.w("*********", backdropPath);
+                        String overview = mMovie.getOverview();
+
+                        String voteAverage = mMovie.getVoteAverage();
+
+                        String releaseDate = mMovie.getReleaseDate() ;
+
+                        Movie newFavoriteMovie= new Movie(originalTitle,  posterPath,  backdropPath,
+                                overview,  voteAverage,  releaseDate, movieId);
+
+                        if (db.movieDao().loadMovie(mMovie.getMovieId()) == null) {
+
+
+                            db.movieDao().insertMovie(newFavoriteMovie);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    favotitesButton.setText("REMOVE FROM\nFAVORITES");
+                                }
+                            });
+                        } else {
+                            db.movieDao().deleteMovie(newFavoriteMovie);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    favotitesButton.setText("MARK AS\nFAVORITE");
+                                }
+                            });
+                        }
+                    }
+                });
+
+
+
+            }
+        });
 
         ImageView backdropImageView = findViewById(R.id.backdrop_image);
         Picasso.get().load(mMovie.getBackdropPath()).into(backdropImageView);
