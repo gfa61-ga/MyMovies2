@@ -152,7 +152,7 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
 
         TextView overview = findViewById(R.id.overview);
         overview.setText(mMovie.getOverview());
-        if (Build.VERSION.SDK_INT >= 26) {
+        if (Build.VERSION.SDK_INT >= 29) {
             overview.setJustificationMode(LineBreaker.JUSTIFICATION_MODE_INTER_WORD);
         }
 
@@ -231,8 +231,8 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
 
             @Override
             public String[] loadInBackground() {
-                URL trailersUrl = NetworkUtils.buildTrailerUrl(mMovie.getMovieId());
-                URL reviewsUrl = NetworkUtils.buildReviewUrl(mMovie.getMovieId());
+                URL trailersUrl = NetworkUtils.buildMovieUrl(mMovie.getMovieId(), "videos");
+                URL reviewsUrl = NetworkUtils.buildMovieUrl(mMovie.getMovieId(), "reviews");
                 try {
                     return new String[] {NetworkUtils.getResponseFromHttpUrl(trailersUrl), NetworkUtils.getResponseFromHttpUrl(reviewsUrl)};
                 } catch (Exception e) {
@@ -244,7 +244,7 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
     }
 
     @Override
-    public void onLoadFinished(Loader<String[]> loader, String apiResponse[]) {
+    public void onLoadFinished(Loader<String[]> loader, String[] apiResponse) {
         if (apiResponse!= null) {
             if (apiResponse[0] != null && apiResponse[0] != null) {
                 mTrailersApiResponseJson[0] = apiResponse[0];
@@ -269,8 +269,6 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
                     reviewsAdapter.setReviews(reviews);
                     reviewsAdapter.notifyDataSetChanged();
                 }
-
-            } else {
 
             }
         } else {

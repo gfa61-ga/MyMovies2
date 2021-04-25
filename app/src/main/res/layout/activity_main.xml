@@ -3,29 +3,31 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#212121"
     tools:context=".MainActivity">
 
     <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerview_movies"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#212121"
-        android:id="@+id/recyclerview_movies"/>
+        android:background="#212121" />
 
     <TextView
         android:id="@+id/tv_error_message_display"
         android:layout_width="match_parent"
-        android:layout_height="136dp"
-        android:gravity="bottom|center_horizontal"
+        android:layout_height="172dp"
+        android:background="#757575"
+        android:gravity="center_vertical|center_horizontal"
         android:padding="16dp"
         android:text="@string/error_message"
-        android:textColor="#6917EE"
+        android:textColor="#ff3c73"
         android:textSize="20sp"
         android:visibility="invisible" />
 
     <ProgressBar
         android:id="@+id/pb_loading_indicator"
-        android:layout_height="42dp"
         android:layout_width="42dp"
+        android:layout_height="42dp"
         android:layout_gravity="center"
         android:visibility="invisible" />
 

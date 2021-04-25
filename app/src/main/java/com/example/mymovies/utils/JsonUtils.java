@@ -56,13 +56,13 @@ public class JsonUtils {
     public static List<Trailer> parseTrailers(String apiResponse) {
         List<Trailer> trailers = new ArrayList<>();
         try {
-            JSONObject moviesJson = new JSONObject(apiResponse);
-            JSONArray results = moviesJson.getJSONArray("results");
+            JSONObject trailersJson = new JSONObject(apiResponse);
+            JSONArray results = trailersJson.getJSONArray("results");
 
             for (int index = 0; index < results.length(); index++) {
                 JSONObject trailerJson = results.getJSONObject(index);
                 Trailer trailer = parseTrailerFromJsonObject(trailerJson);
-                if (trailer.getType().equals("Trailer")) {
+                if (trailer.getType().equals("Trailer")) { // Get only "trailer" videos
                     trailers.add(trailer);
                 }
             }
@@ -72,16 +72,15 @@ public class JsonUtils {
         return trailers;
     }
 
-    public static Trailer parseTrailerFromJsonObject(JSONObject movieJson) {
+    public static Trailer parseTrailerFromJsonObject(JSONObject trailerJson) {
         String key = "";
         String name = "";
         String type = "";
 
-
         try {
-            key = movieJson.getString("key");
-            name = movieJson.getString("name");
-            type = movieJson.getString("type");
+            key = trailerJson.getString("key");
+            name = trailerJson.getString("name");
+            type = trailerJson.getString("type");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -92,14 +91,14 @@ public class JsonUtils {
     public static List<Review> parseReviews(String apiResponse) {
         List<Review> reviews = new ArrayList<>();
         try {
-            JSONObject moviesJson = new JSONObject(apiResponse);
-            JSONArray results = moviesJson.getJSONArray("results");
+            JSONObject reviewsJson = new JSONObject(apiResponse);
+            JSONArray results = reviewsJson.getJSONArray("results");
 
             for (int index = 0; index < results.length(); index++) {
-                JSONObject trailerJson = results.getJSONObject(index);
-                Review review = parseReviewFromJsonObject(trailerJson);
+                JSONObject reviewJson = results.getJSONObject(index);
+                Review review = parseReviewFromJsonObject(reviewJson);
                 try {
-                    if (Float.parseFloat(review.getRating()) > 5) {
+                    if (Float.parseFloat(review.getRating()) > 5) { // Get only reviews with rating > 5
                         reviews.add(review);
                     }
                 } catch (NumberFormatException e) {
@@ -112,21 +111,20 @@ public class JsonUtils {
         return reviews;
     }
 
-    public static Review parseReviewFromJsonObject(JSONObject movieJson) {
-        String key = "";
-        String name = "";
-        String type = "";
-
+    public static Review parseReviewFromJsonObject(JSONObject reviewJson) {
+        String author = "";
+        String rating = "";
+        String content = "";
 
         try {
-            key = movieJson.getString("author");
-            JSONObject authorDetails = movieJson.getJSONObject("author_details");
-            name = authorDetails.getString("rating");
-            type = movieJson.getString("content");
+            author = reviewJson.getString("author");
+            JSONObject authorDetails = reviewJson.getJSONObject("author_details");
+            rating = authorDetails.getString("rating");
+            content = reviewJson.getString("content");
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        return new Review(key, name, type);
+        return new Review(author, rating, content);
     }
 }

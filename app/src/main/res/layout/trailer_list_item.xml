@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -14,6 +13,8 @@
         android:layout_marginStart="32dp"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
+        android:background="#757575"
+        android:contentDescription="@string/trailer_thumbnail"
         android:src="@drawable/ic_launcher_background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -29,7 +30,7 @@
         android:contentDescription="@string/movie_poster"
         android:focusable="true"
         android:scaleType="fitXY"
-        android:text="trailer"
+        android:text="@string/trailer"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         app:layout_constraintBottom_toBottomOf="@+id/trailer_thumb"
         app:layout_constraintEnd_toEndOf="parent"

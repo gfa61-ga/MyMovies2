@@ -295,7 +295,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnCl
                     String sortByApiPath = args.getString(SORT_BY_EXTRA);
                     String apiPageToQuery = args.getString(PAGE_NUMBER_EXTRA);
 
-                    URL url = NetworkUtils.buildUrl(sortByApiPath, apiPageToQuery);
+                    URL url = NetworkUtils.buildMoviesUrl(sortByApiPath, apiPageToQuery);
                     try {
                         return NetworkUtils.getResponseFromHttpUrl(url);
                     } catch (Exception e) {

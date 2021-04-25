@@ -4,7 +4,17 @@
     <string name="action_order_top_rated">Top Rated</string>
     <string name="action_order_favorites">Favorites</string>
     <string name="error_message">
-        No internet connection\nor\nInvalid API key.
+        No internet connection.\nPlease try later.
     </string>
     <string name="movie_poster">movie poster</string>
+    <string name="backdrop_image">backdrop image</string>
+    <string name="poster_image">poster image</string>
+    <string name="trailers">Trailers:</string>
+    <string name="reviews">Reviews:</string>
+    <string name="mark_as_favorite">MARK AS \nFAVORITE</string>
+    <string name="vertical_bar">vertical bar</string>
+    <string name="author">author</string>
+    <string name="content">content</string>
+    <string name="trailer">trailer</string>
+    <string name="trailer_thumbnail">trailer thumbnail</string>
 </resources>

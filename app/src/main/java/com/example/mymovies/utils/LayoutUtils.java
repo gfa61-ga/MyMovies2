@@ -10,13 +10,14 @@ public class LayoutUtils {
         float screenWidthDp = displayMetrics.widthPixels / displayMetrics.density;
         return (int) (screenWidthDp / columnWidthDp + 0.5);
     }
+
     public static int calculateNoOfTrailerColumns(Context context) {
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
         if (displayMetrics.widthPixels<displayMetrics.heightPixels) {
-            return 1;
+            return 1; // Screen in portrait mode
         } else
         {
-            return 2;
+            return 2; // Screen in landscape mode
         }
     }
 }

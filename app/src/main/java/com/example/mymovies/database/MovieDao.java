@@ -1,6 +1,5 @@
 package com.example.mymovies.database;
 
-
 import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
@@ -25,7 +24,7 @@ public interface MovieDao {
     @Insert
     void insertMovie(Movie movieEntry);
 
-    @Update(onConflict = OnConflictStrategy.REPLACE)
+    @Update(onConflict = OnConflictStrategy.REPLACE)  // Not used in this app
     void updateMovie(Movie movieEntry);
 
     @Delete

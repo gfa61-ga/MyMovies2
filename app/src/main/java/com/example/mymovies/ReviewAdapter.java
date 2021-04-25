@@ -82,7 +82,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
             holder.reviewContentTextView.setText(text);
         }
 
-        if (Build.VERSION.SDK_INT >= 26) {
+        if (Build.VERSION.SDK_INT >= 29) {
             holder.reviewContentTextView.setJustificationMode(LineBreaker.JUSTIFICATION_MODE_INTER_WORD);
         }
     }
@@ -112,7 +112,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
             reviewContentTextView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    int trailerViewHolderPosition = getAdapterPosition(); // this is also movie's index in moviesList
+                    int trailerViewHolderPosition = getBindingAdapterPosition(); // this is also movie's index in moviesList
                     // Calls mainActivity's onClick method which opens movie's detailsActivity
                    // mClickHandler.onClick(reviews.get(trailerViewHolderPosition));
                 }
@@ -120,23 +120,6 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
         }
     }
 
-    public void loadMoreMovies(String apiResponse) {
-        List<Review> moreMoviesList = JsonUtils.parseReviews(apiResponse);
-        if (reviews == null) {
-            reviews = moreMoviesList;
-        } else {
-            reviews.addAll(moreMoviesList);
-        }
-        notifyDataSetChanged(); // Adjusts the moviesDisplayRecyclerView to display the newly loaded movies
-    }
-
-    public List<Review> getReviews() {
-        return reviews;
-    }
-
-    public void setTrailers(List<Review> reviews) {
-        this.reviews = reviews;
-    }
     public void setReviews(List<Review> reviews) {
         this.reviews = reviews;
     }

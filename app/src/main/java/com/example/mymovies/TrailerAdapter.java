@@ -89,7 +89,7 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerV
             trailerThumbImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    int trailerViewHolderPosition = getAdapterPosition(); // this is also movie's index in moviesList
+                    int trailerViewHolderPosition = getBindingAdapterPosition(); // this is also movie's index in moviesList
                     // Calls mainActivity's onClick method which opens movie's detailsActivity
                     mClickHandler.onClick(trailers.get(trailerViewHolderPosition));
                 }
@@ -97,24 +97,7 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerV
         }
     }
 
-    public void loadMoreMovies(String apiResponse) {
-        List<Trailer> moreMoviesList = JsonUtils.parseTrailers(apiResponse);
-        if (trailers == null) {
-            trailers = moreMoviesList;
-        } else {
-            trailers.addAll(moreMoviesList);
-        }
-        notifyDataSetChanged(); // Adjusts the moviesDisplayRecyclerView to display the newly loaded movies
-    }
-
-    public List<Trailer> getTrailers() {
-        return trailers;
-    }
-
     public void setTrailers(List<Trailer> trailers) {
         this.trailers = trailers;
-    }
-    public void setReviews(List<Review> reviews) {
-        this.reviews = reviews;
     }
 }

@@ -27,7 +27,7 @@ public class NetworkUtils {
     // Url to get a list of API genres:  https://api.themoviedb.org/3/genre/movie/list?api_key=OurApiKey
     private static final String genresList = "10749,14"; // Romance id: 10749, Fantasy id: 14
 
-    public static URL buildUrl(String sortByPath, String apiPage) {
+    public static URL buildMoviesUrl(String sortByPath, String apiPage) {
         String baseUrl =  THE_MOVIE_DB_BASE_URL + sortByPath;
 
         Uri builtUri = Uri.parse(baseUrl).buildUpon()
@@ -36,42 +36,19 @@ public class NetworkUtils {
                 .appendQueryParameter(LANGUAGE_PARAM, languageIsoCode)
                 //.appendQueryParameter(GENRES_PARAM, genresList)
                 .build();
-        Log.w("builtUri", String.valueOf(builtUri));
-        URL url = null;
-        try {
-            url = new URL(builtUri.toString());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        return url;
+        return getUrlFromUri(builtUri);
     }
 
-    public static URL buildTrailerUrl(String movieId) {
-        String baseUrl =  THE_MOVIE_DB_BASE_URL + movieId + "/videos";
+    public static URL buildMovieUrl(String movieId, String movieDetailsPath) {
+        String baseUrl =  THE_MOVIE_DB_BASE_URL + movieId + "/" + movieDetailsPath;
 
         Uri builtUri = Uri.parse(baseUrl).buildUpon()
                 .appendQueryParameter(API_KEY_PARAM, apiKey)
-                //.appendQueryParameter(LANGUAGE_PARAM, languageIsoCode)
-                //.appendQueryParameter(GENRES_PARAM, genresList)
                 .build();
-        Log.w("builtUri", String.valueOf(builtUri));
-        URL url = null;
-        try {
-            url = new URL(builtUri.toString());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        return url;
+        return getUrlFromUri(builtUri);
     }
 
-    public static URL buildReviewUrl(String movieId) {
-        String baseUrl =  THE_MOVIE_DB_BASE_URL + movieId + "/reviews";
-
-        Uri builtUri = Uri.parse(baseUrl).buildUpon()
-                .appendQueryParameter(API_KEY_PARAM, apiKey)
-                //.appendQueryParameter(LANGUAGE_PARAM, languageIsoCode)
-                //.appendQueryParameter(GENRES_PARAM, genresList)
-                .build();
+    public static URL getUrlFromUri(Uri builtUri) {
         Log.w("builtUri", String.valueOf(builtUri));
         URL url = null;
         try {
