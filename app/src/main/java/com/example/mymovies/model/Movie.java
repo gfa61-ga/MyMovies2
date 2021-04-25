@@ -31,15 +31,12 @@ public class Movie implements Parcelable {
     @ColumnInfo(name = "release_date")
     private String releaseDate;
 
-    // w185 is the path for getting an image with 185 dpi width
-    public String IMAGES_BASE_URL = "https://image.tmdb.org/t/p/w185";
-
     public Movie(String originalTitle, String posterPath, String backdropPath,
                  String overview, String voteAverage, String releaseDate, @NonNull String movieId) {
 
-        this.posterPath = IMAGES_BASE_URL + posterPath;
+        this.posterPath = posterPath;
         this.originalTitle = originalTitle;
-        this.backdropPath = IMAGES_BASE_URL + backdropPath;
+        this.backdropPath = backdropPath;
         this.overview = overview;
         this.voteAverage = voteAverage;
         this.releaseDate = releaseDate;

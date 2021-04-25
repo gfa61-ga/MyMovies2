@@ -34,6 +34,8 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
      * in order to call it's onClick method.
      * Through the mGridLayoutManager parameter is passed a reference to the moviesDisplayRecyclerView
      * layout in order to call it's getSpanCount method
+     * Through the sortByApiPath parameter is passed the sortByApiPath value of the MainActivity,
+     * to be used in getItemCount() function
      */
     public MovieAdapter(OnClickHandler mClickHandler, GridLayoutManager mGridLayoutManager, String sortByApiPath) {
         this.mClickHandler = mClickHandler;
@@ -54,7 +56,11 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
 
     @Override
     public void onBindViewHolder(@NonNull MovieViewHolder holder, int position) {
-        Picasso.get().load(moviesList.get(position).getPosterPath()).into(holder.moviePosterImageView);
+        // w185 is the path for getting an image with 185 dpi width
+        String IMAGES_BASE_URL = "https://image.tmdb.org/t/p/w185";
+
+        Picasso.get().load(IMAGES_BASE_URL + moviesList.get(position).getPosterPath())
+                .into(holder.moviePosterImageView);
     }
 
     /** Returns the number of items (posters) to be displayed*/
@@ -72,7 +78,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
             int numberOfFullRows = moviesList.size()/numberOfDisplayedColumns; // Integer part of division
             return numberOfFullRows*numberOfDisplayedColumns;
         } else {
-            return moviesList.size();
+            return moviesList.size(); // returns all favorite movies number - The last row of posters will NOT be full
         }
     }
 
@@ -89,7 +95,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
             moviePosterImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    int movieViewHolderPosition = getAdapterPosition(); // this is also movie's index in moviesList
+                    int movieViewHolderPosition = getBindingAdapterPosition(); // this is also movie's index in moviesList
                     // Calls mainActivity's onClick method which opens movie's detailsActivity
                     mClickHandler.onClick(moviesList.get(movieViewHolderPosition));
                 }

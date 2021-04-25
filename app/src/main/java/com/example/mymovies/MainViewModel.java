@@ -12,10 +12,10 @@ import java.util.List;
 */
 public class MainViewModel extends AndroidViewModel  {
     private ArrayList<String>[] mApiResponseJson;
-    private List<Movie> moviesList = new ArrayList<Movie>();
-    String[] mTrailersApiResponseJson;
+    private List<Movie> moviesList = new ArrayList<>();
+    String[] mTrailersAndReviewsApiResponseJson;
 
-    // This constructor creates a "MainViewModel has no zero argument constructor" error
+    // This constructor creates a "MainViewModel has no zero argument constructor" error ???????
     /*
     public MainViewModel(@NonNull Application application) {
         super(application);
@@ -25,33 +25,34 @@ public class MainViewModel extends AndroidViewModel  {
 
         mApiResponseJson=new ArrayList[2];
 
-        mTrailersApiResponseJson = new String[2];
-
-        // Create ArrayList to store API responses for most popular movies
+        // Create ArrayList to store API responses for most popular_movies pages and reuse them, if needed while tha app is open
         int mostPopularIndex=0;
         mApiResponseJson[mostPopularIndex] = new ArrayList<String>();
 
-        // Create ArrayList to store API responses for top rated movies
+        // Create ArrayList to store API responses for top rated_movies pages and reuse them, if needed while tha app is open
         int topRatedIndex=1;
         mApiResponseJson[topRatedIndex] = new ArrayList<String>();
+
+        // Create String array to store API response for movie's trailers and reviews, in order to restore them after rotation
+        mTrailersAndReviewsApiResponseJson = new String[2];
     }
 
     public ArrayList<String>[] getmApiResponceJson() {
         return mApiResponseJson;
     }
 
-    public String[] getTrailersApiResponseJson() {
-        return mTrailersApiResponseJson;
-    }
-
     public List<Movie> getMoviesFromModel() {
         return moviesList;
     }
 
-    public void setMoviesFromModel(List<Movie> currentMoviesList) {
+    public void setMoviesOfModel(List<Movie> currentMoviesList) {
         moviesList = new ArrayList<Movie>();
         if (currentMoviesList!= null) {
             moviesList.addAll(currentMoviesList);
         }
+    }
+
+    public String[] getTrailersAndReviewsApiResponseJson() {
+        return mTrailersAndReviewsApiResponseJson;
     }
 }

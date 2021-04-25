@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.room.ColumnInfo;
 
 import android.annotation.SuppressLint;
 import android.app.LoaderManager;
@@ -27,7 +26,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.mymovies.database.AppDatabase;
-//import com.example.mymovies.database.MovieEntry;
 import com.example.mymovies.model.Movie;
 import com.example.mymovies.model.Review;
 import com.example.mymovies.model.Trailer;
@@ -37,36 +35,42 @@ import com.example.mymovies.utils.NetworkUtils;
 import com.squareup.picasso.Picasso;
 
 import java.net.URL;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-public class MovieDetailsActivity extends AppCompatActivity implements TrailerAdapter.OnClickHandler, ReviewAdapter.OnClickHandler, LoaderManager.LoaderCallbacks<String[]>{
+public class MovieDetailsActivity extends AppCompatActivity implements TrailerAdapter.OnClickHandler,
+        LoaderManager.LoaderCallbacks<String[]>{
     Movie mMovie;
-    private MainViewModel mMainActivityModel;
-    String[] mTrailersApiResponseJson;
-    TrailerAdapter trailersAdapter;
-    ReviewAdapter reviewsAdapter;
 
+    String[] mTrailersAndReviewsApiResponseJson; /* Reference for Trailers and Reviews API responses
+        for the current mMovie, saved in MainViewModel */
+    AppDatabase favoriteMoviesDatabase;
+
+    TrailerAdapter trailersAdapter;
     ImageView trailersBar;
     TextView trailersHeader;
 
+    ReviewAdapter reviewsAdapter;
     ImageView reviewsBar;
     TextView reviewsHeader;
-
-    AppDatabase db;
-
 
     @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie_details);
-        mMainActivityModel = new ViewModelProvider(this).get(MainViewModel.class);
-        mTrailersApiResponseJson = mMainActivityModel.getTrailersApiResponseJson();
+        MainViewModel mMainActivityModel = new ViewModelProvider(this).get(MainViewModel.class);
+
+        /*  When the movieDetailsActivity is created for first time
+                getTrailersAndReviewsApiResponseJson() returns null
+            When the movieDetailsActivity is created after rotation
+                getTrailersAndReviewsApiResponseJson() returns the previous API response*/
+        mTrailersAndReviewsApiResponseJson = mMainActivityModel.getTrailersAndReviewsApiResponseJson();
+        if (mTrailersAndReviewsApiResponseJson[0] != null)
+        Log.w("onCreate", mTrailersAndReviewsApiResponseJson[0]);
 
         // Initialize member variable for the data base
-        db = AppDatabase.getInstance(getApplicationContext());
+        favoriteMoviesDatabase = AppDatabase.getInstance(getApplicationContext());
 
         trailersBar = findViewById(R.id.vertical_bar_1);
         trailersHeader = findViewById(R.id.trailers_header);
@@ -76,57 +80,39 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
 
         mMovie =  getIntent().getParcelableExtra("movie");
 
-        Button favotitesButton = findViewById(R.id.fovorites_button);
+        final boolean[] isFavorite = new boolean[1];
         Executor diskIo = AppExecutors.getInstance().diskIO();
-        // call the diskIO execute method with a new Runnable and implement its run method
+
+        Button favotitesButton = findViewById(R.id.fovorites_button);
         diskIo.execute(new Runnable() {
             @Override
             public void run() {
-                if (db.movieDao().loadMovie(mMovie.getMovieId()) != null) {
+                isFavorite[0] = (favoriteMoviesDatabase.movieDao().loadMovie(mMovie.getMovieId()) != null);
+                if (isFavorite[0]) {
                     favotitesButton.setText("REMOVE FROM\nFAVORITES");
                 }
             }
         });
 
-
         favotitesButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                Executor diskIo = AppExecutors.getInstance().diskIO();
-                diskIo.execute(new Runnable() {
+                diskIo.execute(new Runnable() { // Update database on a new thread
                     @Override
                     public void run() {
-                        String movieId = mMovie.getMovieId();
-
-                        String originalTitle = mMovie.getOriginalTitle();
-
-                        String posterPath = mMovie.getPosterPath().substring(Math.max(0, mMovie.getPosterPath().length()-32));
-
-                        String backdropPath = mMovie.getBackdropPath().substring(Math.max(0, mMovie.getBackdropPath().length()-32));
-                        Log.w("*********", backdropPath);
-                        String overview = mMovie.getOverview();
-
-                        String voteAverage = mMovie.getVoteAverage();
-
-                        String releaseDate = mMovie.getReleaseDate() ;
-
-                        Movie newFavoriteMovie= new Movie(originalTitle,  posterPath,  backdropPath,
-                                overview,  voteAverage,  releaseDate, movieId);
-
-                        if (db.movieDao().loadMovie(mMovie.getMovieId()) == null) {
-
-
-                            db.movieDao().insertMovie(newFavoriteMovie);
-                            runOnUiThread(new Runnable() {
+                        if (!isFavorite[0]) {
+                            favoriteMoviesDatabase.movieDao().insertMovie(mMovie);
+                            isFavorite[0]=true;
+                            runOnUiThread(new Runnable() { // Update the Ui on the main thread
                                 @Override
                                 public void run() {
                                     favotitesButton.setText("REMOVE FROM\nFAVORITES");
                                 }
                             });
                         } else {
-                            db.movieDao().deleteMovie(newFavoriteMovie);
-                            runOnUiThread(new Runnable() {
+                            favoriteMoviesDatabase.movieDao().deleteMovie(mMovie);
+                            isFavorite[0]=false;
+                            runOnUiThread(new Runnable() { // Update the Ui on the main thread
                                 @Override
                                 public void run() {
                                     favotitesButton.setText("MARK AS\nFAVORITE");
@@ -135,17 +121,17 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
                         }
                     }
                 });
-
-
-
             }
         });
 
+        // w185 is the path for getting an image with 185 dpi width
+        String IMAGES_BASE_URL = "https://image.tmdb.org/t/p/w185";
+
         ImageView backdropImageView = findViewById(R.id.backdrop_image);
-        Picasso.get().load(mMovie.getBackdropPath()).into(backdropImageView);
+        Picasso.get().load(IMAGES_BASE_URL + mMovie.getBackdropPath()).into(backdropImageView);
 
         ImageView posterImageView = findViewById(R.id.poster_image);
-        Picasso.get().load(mMovie.getPosterPath()).into(posterImageView);
+        Picasso.get().load(IMAGES_BASE_URL + mMovie.getPosterPath()).into(posterImageView);
 
         TextView originalTitle = findViewById(R.id.original_title);
         originalTitle.setText(mMovie.getOriginalTitle());
@@ -161,7 +147,7 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
 
         TextView releaseDate = findViewById(R.id.release_date);
         String releaseDateString =  mMovie.getReleaseDate();
-        if (releaseDateString.length()>0) {
+        if (releaseDateString.length()>0) { // If there is a releasedate in Api response
             releaseDate.setText(releaseDateString.substring(0, 4));
         } else  {
             releaseDate.setText("");
@@ -171,42 +157,40 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
 
         int numOfColumns = LayoutUtils.calculateNoOfTrailerColumns(getApplicationContext());
         RecyclerView trailersDisplayRecyclerView = (RecyclerView) findViewById(R.id.recyclerview_trailers);
-        GridLayoutManager mGridLayoutManager = new GridLayoutManager(context, numOfColumns);
-        mGridLayoutManager.setReverseLayout(false);
-
-        trailersDisplayRecyclerView.setLayoutManager(mGridLayoutManager);
+        GridLayoutManager mTrailersGridLayoutManager = new GridLayoutManager(context, numOfColumns);
+        mTrailersGridLayoutManager.setReverseLayout(false);
+        trailersDisplayRecyclerView.setLayoutManager(mTrailersGridLayoutManager);
         trailersDisplayRecyclerView.setHasFixedSize(true);
-
         TrailerAdapter.OnClickHandler mClickHandler = this;
-        trailersAdapter = new TrailerAdapter(mClickHandler, mGridLayoutManager);
-        ReviewAdapter.OnClickHandler mClickHandler1 = this;
-        reviewsAdapter = new ReviewAdapter(mClickHandler1, mGridLayoutManager);
-
-        //trailersAdapter.setTrailers(JsonUtils.parseTrailers(getResources().getString(R.string.trailers_json)));
-        LoaderManager mLoaderManager = getLoaderManager();
-        Loader<String> mLoader = mLoaderManager.getLoader(233);
-        if (mLoader == null) {
-            mLoaderManager.initLoader(233, null, this);
-            Log.w("********", "initLoader");
-        } else {
-            // This will restart the loader after rotation..!!!
-            mLoaderManager.restartLoader(233, null, this);
-        }
-
+        trailersAdapter = new TrailerAdapter(mClickHandler);
         trailersDisplayRecyclerView.setAdapter(trailersAdapter);
 
         RecyclerView reviewsDisplayRecyclerView = (RecyclerView) findViewById(R.id.recyclerview_reviews);
-        LinearLayoutManager mGridLayoutManager1 = new LinearLayoutManager (context);
-        reviewsDisplayRecyclerView.setLayoutManager(mGridLayoutManager1);
+        LinearLayoutManager mReviewsLinearLayoutManager = new LinearLayoutManager (context);
+        reviewsDisplayRecyclerView.setLayoutManager(mReviewsLinearLayoutManager);
         reviewsDisplayRecyclerView.setHasFixedSize(true);
-
+        reviewsAdapter = new ReviewAdapter();
         reviewsDisplayRecyclerView.setAdapter(reviewsAdapter);
+
+        /* Create or restart
+                the anonymous AsyncTaskLoader instance to load movie's trailers and reviews */
+        LoaderManager mLoaderManager = getLoaderManager();
+        int MOVIE_TRAILERS_AND_REVIEWS_DATA_LOADER = 233;
+        Loader<String> mLoader = mLoaderManager.getLoader(MOVIE_TRAILERS_AND_REVIEWS_DATA_LOADER);
+        if (mLoader == null) {
+            mLoaderManager.initLoader(MOVIE_TRAILERS_AND_REVIEWS_DATA_LOADER, null, this);
+            Log.w("********", "initLoader");
+        } else {
+            // This will restart the loader after rotation..!!!
+            mLoaderManager.restartLoader(MOVIE_TRAILERS_AND_REVIEWS_DATA_LOADER, null, this);
+        }
     }
 
     @Override
     public void onClick(Trailer trailer) {
+        final String BASIC_YOUTUBE_VIDEO_URL = "https://www.youtube.com/watch?v=";
         Intent webIntent = new Intent(Intent.ACTION_VIEW,
-                Uri.parse("https://www.youtube.com/watch?v="+ trailer.getKey()));
+                Uri.parse(BASIC_YOUTUBE_VIDEO_URL+ trailer.getKey()));
         try {
             MovieDetailsActivity.this.startActivity(webIntent);
         } catch (ActivityNotFoundException ex) {
@@ -217,15 +201,16 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
     @Override
     public Loader<String[]> onCreateLoader(int i, Bundle args) {
         return new AsyncTaskLoader<String[]>(this){
-
             @Override
             protected void onStartLoading() {
-                super.onStartLoading();  // ???
-                if(mTrailersApiResponseJson[0] == null && mTrailersApiResponseJson[1] == null){
-                    forceLoad(); // This will ignore a previously loaded data set and load a new one.
-                    // We generally should only call this when the loader is started.
+                // If the MovieDetailsActivity is opend for the first time, load data from API
+                if(mTrailersAndReviewsApiResponseJson[0] == null && mTrailersAndReviewsApiResponseJson[1] == null){
+                    forceLoad();  /* This will ignore a previously loaded data set and load a new one.
+                     We generally should only call this when the loader is started. */
                 } else {
-                    deliverResult(mTrailersApiResponseJson);
+                    // Deliver response, saved in MainViewModel, after rotation
+                    deliverResult(mTrailersAndReviewsApiResponseJson);
+
                 }
             }
 
@@ -234,7 +219,10 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
                 URL trailersUrl = NetworkUtils.buildMovieUrl(mMovie.getMovieId(), "videos");
                 URL reviewsUrl = NetworkUtils.buildMovieUrl(mMovie.getMovieId(), "reviews");
                 try {
-                    return new String[] {NetworkUtils.getResponseFromHttpUrl(trailersUrl), NetworkUtils.getResponseFromHttpUrl(reviewsUrl)};
+                    return new String[] {
+                        NetworkUtils.getResponseFromHttpUrl(trailersUrl),
+                        NetworkUtils.getResponseFromHttpUrl(reviewsUrl)
+                    };
                 } catch (Exception e) {
                     e.printStackTrace();
                     return null;
@@ -247,49 +235,51 @@ public class MovieDetailsActivity extends AppCompatActivity implements TrailerAd
     public void onLoadFinished(Loader<String[]> loader, String[] apiResponse) {
         if (apiResponse!= null) {
             if (apiResponse[0] != null && apiResponse[0] != null) {
-                mTrailersApiResponseJson[0] = apiResponse[0];
-                mTrailersApiResponseJson[1] = apiResponse[1];
+                // Save data to the MainViewModel
+                mTrailersAndReviewsApiResponseJson[0] = apiResponse[0]; // Trailers
+                mTrailersAndReviewsApiResponseJson[1] = apiResponse[1]; // Reviews
 
                 List<Trailer> trailers = JsonUtils.parseTrailers(apiResponse[0]);
                 if (trailers.size() == 0) {
-                    trailersBar.setVisibility(View.GONE);
-                    trailersHeader.setVisibility(View.GONE);
-
+                    hideTrailersHeader();
                 } else {
                     trailersAdapter.setTrailers(trailers);
                     trailersAdapter.notifyDataSetChanged();
                 }
 
                 List<Review> reviews = JsonUtils.parseReviews(apiResponse[1]);
-
                 if (reviews.size() == 0) {
-                    reviewsBar.setVisibility(View.GONE);
-                    reviewsHeader.setVisibility(View.GONE);
+                    hideReviewsHeader();
                 } else {
                     reviewsAdapter.setReviews(reviews);
                     reviewsAdapter.notifyDataSetChanged();
                 }
-
             }
         } else {
             Context toastContext = MovieDetailsActivity.this;
             String errorMessage = "    No internet connection.\n" + "Can't get trailers and reviews." + "\n    Please try again later.";
             Toast noInternetToast = Toast.makeText(toastContext, errorMessage, Toast.LENGTH_LONG);
-            // https://stackoverflow.com/questions/3522023/center-text-in-a-toast-in-android
 
+            // https://stackoverflow.com/questions/3522023/center-text-in-a-toast-in-android
             if (noInternetToast.getView() != null ) {
                 TextView v = (TextView) noInternetToast.getView().findViewById(android.R.id.message);
                 if( v != null) v.setGravity(Gravity.CENTER);
             }
             noInternetToast.show();
-
-            trailersBar.setVisibility(View.GONE);
-            trailersHeader.setVisibility(View.GONE);
-            reviewsBar.setVisibility(View.GONE);
-            reviewsHeader.setVisibility(View.GONE);
+            hideTrailersHeader();
+            hideReviewsHeader();
         }
     }
 
+    public void hideTrailersHeader() {
+        trailersBar.setVisibility(View.GONE);
+        trailersHeader.setVisibility(View.GONE);
+    }
+
+    public void hideReviewsHeader() {
+        reviewsBar.setVisibility(View.GONE);
+        reviewsHeader.setVisibility(View.GONE);
+    }
     @Override
     public void onLoaderReset(Loader<String[]> loader) {
 
