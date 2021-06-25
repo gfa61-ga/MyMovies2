@@ -19,7 +19,7 @@ public class NetworkUtils {
     final static String GENRES_PARAM = "with_genres";
 
     // Our API KEY
-    private static final String apiKey = "ab5823c55dfafcc150970daf9379bc48";
+    private static final String apiKey = "ab5823c55dfaecc150970daf8379bc48";
 
     // An ISO 639-1 value to display translated data for the fields that support it
     private static final String languageIsoCode = "en"; // el Translates data to Greek
